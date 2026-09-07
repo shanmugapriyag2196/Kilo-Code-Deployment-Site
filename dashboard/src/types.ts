@@ -8,10 +8,7 @@ export interface Project {
   name: string;
   description: string;
   gitRepository: string;
-  framework: string;
   branch: string;
-  buildCommand: string;
-  outputDir: string;
   platform: Platform;
   status: ProjectStatus;
   createdAt: string;

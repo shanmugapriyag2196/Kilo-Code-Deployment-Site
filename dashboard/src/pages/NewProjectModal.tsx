@@ -13,10 +13,7 @@ export default function NewProjectModal({ onClose }: NewProjectModalProps) {
     name: '',
     description: '',
     gitRepository: '',
-    framework: 'nextjs',
     branch: 'main',
-    buildCommand: 'npm run build',
-    outputDir: 'dist',
     platform: 'vercel' as Platform,
   });
 
@@ -81,65 +78,16 @@ export default function NewProjectModal({ onClose }: NewProjectModalProps) {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Framework
-              </label>
-              <select
-                value={formData.framework}
-                onChange={(e) => setFormData({ ...formData, framework: e.target.value })}
-                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-slate-200 focus:outline-none focus:border-blue-500"
-              >
-                <option value="nextjs">Next.js</option>
-                <option value="react">React</option>
-                <option value="vue">Vue</option>
-                <option value="nuxt">Nuxt</option>
-                <option value="svelte">Svelte</option>
-                <option value="nodejs">Node.js</option>
-                <option value="python">Python</option>
-                <option value="go">Go</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Branch
-              </label>
-              <input
-                type="text"
-                value={formData.branch}
-                onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
-                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-slate-200 focus:outline-none focus:border-blue-500"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Build Command
-              </label>
-              <input
-                type="text"
-                value={formData.buildCommand}
-                onChange={(e) => setFormData({ ...formData, buildCommand: e.target.value })}
-                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-slate-200 focus:outline-none focus:border-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Output Directory
-              </label>
-              <input
-                type="text"
-                value={formData.outputDir}
-                onChange={(e) => setFormData({ ...formData, outputDir: e.target.value })}
-                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-slate-200 focus:outline-none focus:border-blue-500"
-              />
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">
+              Branch
+            </label>
+            <input
+              type="text"
+              value={formData.branch}
+              onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
+              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-slate-200 focus:outline-none focus:border-blue-500"
+            />
           </div>
 
           <div>

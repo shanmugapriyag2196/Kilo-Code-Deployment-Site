@@ -30,6 +30,7 @@ export interface Deployment {
   createdAt: string;
   status: DeploymentStatus;
   logs: DeploymentLog[];
+  commitTree?: GitHubTreeItem[];
 }
 
 export interface DeploymentLog {
@@ -69,3 +70,12 @@ export interface PlatformInfo {
 }
 
 export type Page = 'overview' | 'projects' | 'project-detail' | 'deployments' | 'deployment-detail' | 'environments' | 'platforms' | 'activity' | 'logs' | 'settings';
+
+export interface GitHubTreeItem {
+  path: string;
+  mode: string;
+  type: 'blob' | 'tree';
+  sha: string;
+  size?: number;
+  url: string;
+}

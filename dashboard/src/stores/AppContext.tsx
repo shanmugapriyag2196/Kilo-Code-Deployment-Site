@@ -1,8 +1,8 @@
 import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
-import { Project, Deployment, EnvironmentDeployment, ActivityItem } from '../types';
+import { Project, Deployment, EnvironmentDeployment, ActivityItem, GitHubTreeItem } from '../types';
 import { storage } from '../lib/storage';
 import { generateMockDeployment, createActivityItem, createEnvironmentDeployment, getNextStatus, generateDeploymentLogsForStage } from '../lib/mockData';
-import { fetchCommitsFromGitHub } from '../services/githubService';
+import { fetchCommitsFromGitHub, fetchCommitTree, parseGitHubRepo } from '../services/githubService';
 import { v4 as uuidv4 } from 'uuid';
 
 interface AppState {
@@ -26,6 +26,7 @@ interface AppContextType extends AppState {
   rollback: (projectId: string) => void;
   selectDeployment: (id: string | null) => void;
   refreshData: () => void;
+  getCommitTree: (deploymentId: string) => Promise<GitHubTreeItem[]>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -37,6 +38,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [activity, setActivity] = useState<ActivityItem[]>(() => storage.getActivity());
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [selectedDeploymentId, setSelectedDeploymentId] = useState<string | null>(null);
+  const [commitTrees, setCommitTrees] = useState<Record<string, GitHubTreeItem[]>>({});
 
   const persistProjects = (newProjects: Project[]) => {
     setProjects(newProjects);
@@ -56,6 +58,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const persistActivity = (newActivity: ActivityItem[]) => {
     setActivity(newActivity);
     storage.saveActivity(newActivity);
+  };
+
+  const persistCommitTrees = (trees: Record<string, GitHubTreeItem[]>) => {
+    setCommitTrees(trees);
+    localStorage.setItem('vg_commit_trees', JSON.stringify(trees));
   };
 
   const createProject = useCallback((projectData: Omit<Project, 'id' | 'createdAt' | 'updatedAt' | 'status'>): Project => {
@@ -86,6 +93,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     const newDeployments: Deployment[] = [];
     const now = new Date().toISOString();
+    const repoInfo = parseGitHubRepo(project.gitRepository);
+    const newCommitTrees: Record<string, GitHubTreeItem[]> = {};
 
     commits.forEach((commit, index) => {
       const commitNumber = index + 1;
@@ -107,10 +116,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
         logs: generateDeploymentLogsForStage(deploymentId, commitNumber, 'ready'),
       };
       newDeployments.push(deployment);
+
+      if (repoInfo) {
+        newCommitTrees[deploymentId] = [];
+      }
     });
 
     const allDeployments = [...newDeployments, ...deployments];
     persistDeployments(allDeployments);
+    persistCommitTrees({ ...commitTrees, ...newCommitTrees });
 
     const envDeployment = {
       id: `env_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
@@ -134,7 +148,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     persistActivity([activityItem, ...activity]);
 
     return newDeployments;
-  }, [projects, deployments, environments, activity]);
+  }, [projects, deployments, environments, activity, commitTrees]);
 
   const updateProject = useCallback((id: string, updates: Partial<Project>) => {
     const newProjects = projects.map(p => 
@@ -231,6 +245,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
     persistActivity([activityItem, ...activity]);
   }, [projects, deployments, activity]);
 
+  const getCommitTree = useCallback(async (deploymentId: string): Promise<GitHubTreeItem[]> => {
+    const deployment = deployments.find(d => d.id === deploymentId);
+    if (!deployment) return [];
+    
+    const cached = commitTrees[deploymentId];
+    if (cached) return cached;
+
+    const project = projects.find(p => p.id === deployment.projectId);
+    if (!project?.gitRepository) return [];
+
+    const repoInfo = parseGitHubRepo(project.gitRepository);
+    if (!repoInfo) return [];
+
+    const tree = await fetchCommitTree(repoInfo.owner, repoInfo.repo, deployment.commitSha);
+    const newCommitTrees = { ...commitTrees, [deploymentId]: tree };
+    persistCommitTrees(newCommitTrees);
+    
+    return tree;
+  }, [deployments, projects, commitTrees]);
+
   const selectDeployment = useCallback((id: string | null) => {
     setSelectedDeploymentId(id);
   }, []);
@@ -240,6 +274,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setDeployments(storage.getDeployments());
     setEnvironments(storage.getEnvironments());
     setActivity(storage.getActivity());
+    try {
+      const trees = localStorage.getItem('vg_commit_trees');
+      if (trees) setCommitTrees(JSON.parse(trees));
+    } catch {
+      setCommitTrees({});
+    }
   }, []);
 
   useEffect(() => {
@@ -299,6 +339,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       rollback,
       selectDeployment,
       refreshData,
+      getCommitTree,
     }}>
       {children}
     </AppContext.Provider>

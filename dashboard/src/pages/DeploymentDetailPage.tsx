@@ -1,18 +1,42 @@
 import { useParams, Link } from 'react-router-dom';
 import { useApp } from '../stores/AppContext';
-import { ArrowLeft, ExternalLink, Check, Rocket, GitBranch, Clock, RefreshCw, Trash2 } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Check, Rocket, GitBranch, Clock, RefreshCw, Trash2, FileCode } from 'lucide-react';
 import StatusBadge from '../components/StatusBadge';
 import DeploymentPipeline from '../components/DeploymentPipeline';
 import LogViewer from '../components/LogViewer';
-import { useState } from 'react';
+import CodeViewer from '../components/CodeViewer';
+import { useState, useEffect } from 'react';
+import { parseGitHubRepo } from '../services/githubService';
 
 export default function DeploymentDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { deployments, redeploy, cancelDeployment } = useApp();
+  const { deployments, redeploy, cancelDeployment, getCommitTree, projects } = useApp();
   const [copied, setCopied] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'logs'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'logs' | 'code'>('overview');
+  const [commitFiles, setCommitFiles] = useState<Array<{ path: string; type: 'blob' | 'tree' }>>([]);
+  const [selectedFile, setSelectedFile] = useState<{ path: string; content: string } | null>(null);
 
   const deployment = deployments.find(d => d.id === id);
+
+  useEffect(() => {
+    const loadCommitTree = async () => {
+      if (!deployment || !id) return;
+      
+      try {
+        const tree = await getCommitTree(id);
+        const files = tree.map(item => ({
+          path: item.path,
+          type: item.type as 'blob' | 'tree',
+        }));
+        setCommitFiles(files);
+      } catch (error) {
+        console.error('Failed to load commit tree:', error);
+        setCommitFiles([]);
+      }
+    };
+
+    loadCommitTree();
+  }, [deployment, id, getCommitTree]);
 
   if (!deployment) {
     return (
@@ -24,6 +48,8 @@ export default function DeploymentDetailPage() {
       </div>
     );
   }
+
+  const project = projects.find(p => p.id === deployment.projectId);
 
   const handleRedeploy = () => {
     redeploy(deployment.id);
@@ -39,6 +65,21 @@ export default function DeploymentDetailPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleFileClick = async (path: string) => {
+    if (!project?.gitRepository) return;
+    
+    const repoInfo = parseGitHubRepo(project.gitRepository);
+    if (!repoInfo) return;
+
+    try {
+      const { fetchFileContent } = await import('../services/githubService');
+      const content = await fetchFileContent(repoInfo.owner, repoInfo.repo, path, deployment.commitSha);
+      setSelectedFile({ path, content: content || 'Unable to load file content' });
+    } catch {
+      setSelectedFile({ path, content: 'Error loading file' });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -50,7 +91,7 @@ export default function DeploymentDetailPage() {
         </Link>
         <div className="flex-1">
           <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold text-white">{deployment.projectName}</h1>
+            <h1 className="text-3xl font-bold text-white">#{deployment.commitNumber} {deployment.projectName}</h1>
             <StatusBadge status={deployment.status} />
           </div>
           <p className="text-slate-400 mt-1">
@@ -159,6 +200,16 @@ export default function DeploymentDetailPage() {
           >
             Logs
           </button>
+          <button
+            onClick={() => setActiveTab('code')}
+            className={`pb-3 text-sm font-medium transition-colors ${
+              activeTab === 'code'
+                ? 'text-blue-400 border-b-2 border-blue-400'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            Code
+          </button>
         </div>
       </div>
 
@@ -168,6 +219,37 @@ export default function DeploymentDetailPage() {
 
       {activeTab === 'logs' && (
         <LogViewer logs={deployment.logs} />
+      )}
+
+      {activeTab === 'code' && (
+        <div className="space-y-6">
+          {selectedFile ? (
+            <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                  <FileCode className="w-5 h-5" />
+                  {selectedFile.path}
+                </h3>
+                <button
+                  onClick={() => setSelectedFile(null)}
+                  className="text-sm text-slate-400 hover:text-slate-200"
+                >
+                  Back to files
+                </button>
+              </div>
+              <div className="bg-slate-950 border border-slate-800 rounded-lg p-4 max-h-96 overflow-y-auto">
+                <pre className="text-sm text-slate-300 whitespace-pre-wrap font-mono">
+                  {selectedFile.content}
+                </pre>
+              </div>
+            </div>
+          ) : (
+            <CodeViewer
+              files={commitFiles}
+              onFileClick={handleFileClick}
+            />
+          )}
+        </div>
       )}
     </div>
   );

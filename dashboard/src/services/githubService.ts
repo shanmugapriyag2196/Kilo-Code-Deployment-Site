@@ -7,6 +7,15 @@ export interface GitHubCommit {
   author: string;
 }
 
+export interface GitHubTreeItem {
+  path: string;
+  mode: string;
+  type: 'blob' | 'tree';
+  sha: string;
+  size?: number;
+  url: string;
+}
+
 export async function fetchCommitsFromGitHub(repoUrl: string): Promise<GitHubCommit[]> {
   try {
     const match = repoUrl.match(/github\.com\/([^/]+)\/([^/?#]+)/);
@@ -26,6 +35,41 @@ export async function fetchCommitsFromGitHub(repoUrl: string): Promise<GitHubCom
   } catch (error) {
     console.error('Failed to fetch GitHub commits:', error);
     return [];
+  }
+}
+
+export async function fetchCommitTree(owner: string, repo: string, sha: string): Promise<GitHubTreeItem[]> {
+  try {
+    const response = await axios.get(`https://api.github.com/repos/${owner}/${repo}/git/trees/${sha}?recursive=1`);
+    return response.data.tree || [];
+  } catch (error) {
+    console.error('Failed to fetch commit tree:', error);
+    return [];
+  }
+}
+
+export async function fetchFileContent(owner: string, repo: string, path: string, sha: string): Promise<string | null> {
+  try {
+    const response = await axios.get(`https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${sha}`);
+    if (response.data.content) {
+      return atob(response.data.content);
+    }
+    return null;
+  } catch (error) {
+    console.error('Failed to fetch file content:', error);
+    return null;
+  }
+}
+
+export async function fetchCommitDiff(owner: string, repo: string, sha: string): Promise<string | null> {
+  try {
+    const response = await axios.get(`https://api.github.com/repos/${owner}/${repo}/commits/${sha}`, {
+      headers: { Accept: 'application/vnd.github.v3.diff' }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch commit diff:', error);
+    return null;
   }
 }
 

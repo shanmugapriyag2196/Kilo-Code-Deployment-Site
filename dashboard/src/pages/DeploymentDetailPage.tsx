@@ -4,7 +4,7 @@ import { ArrowLeft, ExternalLink, Check, Rocket, GitBranch, Clock, RefreshCw, Tr
 import StatusBadge from '../components/StatusBadge';
 import DeploymentPipeline from '../components/DeploymentPipeline';
 import LogViewer from '../components/LogViewer';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 export default function DeploymentDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -13,15 +13,6 @@ export default function DeploymentDetailPage() {
   const [activeTab, setActiveTab] = useState<'overview' | 'logs'>('overview');
 
   const deployment = deployments.find(d => d.id === id);
-  
-  useEffect(() => {
-    if (deployment && ['queued', 'installing', 'building', 'testing', 'deploying', 'health_check'].includes(deployment.status)) {
-      const interval = setInterval(() => {
-        window.location.reload();
-      }, 3000);
-      return () => clearInterval(interval);
-    }
-  }, [deployment?.status]);
 
   if (!deployment) {
     return (

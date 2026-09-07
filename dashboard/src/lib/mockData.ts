@@ -13,10 +13,38 @@ const commitMessages = [
   'feat: add real-time notifications',
 ];
 
+const stageMessages: Record<string, { message: string; level: 'info' | 'success' | 'warn' | 'error' }[]> = {
+  queued: [{ message: 'Deployment queued', level: 'info' }],
+  installing: [
+    { message: 'Installing dependencies with npm...', level: 'info' },
+    { message: 'Added 342 packages in 2.4s', level: 'success' },
+  ],
+  building: [
+    { message: 'Running build command: npm run build', level: 'info' },
+    { message: 'Compiled successfully in 3.2s', level: 'success' },
+  ],
+  testing: [
+    { message: 'Running 24 tests...', level: 'info' },
+    { message: 'All tests passed', level: 'success' },
+  ],
+  deploying: [
+    { message: 'Uploading deployment package...', level: 'info' },
+    { message: 'Deployment uploaded successfully', level: 'success' },
+  ],
+  health_check: [
+    { message: 'Running health check on https://...', level: 'info' },
+    { message: 'Health check passed', level: 'success' },
+  ],
+};
+
+export function getCommitMessage(commitNumber: number): string {
+  return commitMessages[(commitNumber - 1) % commitMessages.length];
+}
+
 export function generateMockDeployment(projectId: string, projectName: string, environment: 'production' | 'preview' | 'development' = 'production', commitNumber: number = 1): Deployment {
   const id = `deploy_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
   const commitSha = Math.random().toString(36).substring(2, 9);
-  const commitMessage = commitMessages[Math.floor(Math.random() * commitMessages.length)];
+  const commitMessage = getCommitMessage(commitNumber);
   const platform: Platform = 'vercel';
   
   const deployment: Deployment = {
@@ -39,35 +67,36 @@ export function generateMockDeployment(projectId: string, projectName: string, e
   return deployment;
 }
 
-export function generateDeploymentLogs(deploymentId: string): DeploymentLog[] {
+export function generateDeploymentLogsForStage(deploymentId: string, commitNumber: number, status: Deployment['status']): DeploymentLog[] {
   const logs: DeploymentLog[] = [];
+  const stages = ['queued', 'installing', 'building', 'testing', 'deploying', 'health_check', 'ready'];
+  const currentIndex = stages.indexOf(status);
   
-  const logMessages: { stage: string; message: string; level: 'info' | 'success' | 'warn' | 'error' }[] = [
-    { stage: 'queued', message: 'Deployment queued', level: 'info' },
-    { stage: 'installing', message: 'Installing dependencies with npm...', level: 'info' },
-    { stage: 'installing', message: 'Added 342 packages in 2.4s', level: 'success' },
-    { stage: 'building', message: 'Running build command: npm run build', level: 'info' },
-    { stage: 'building', message: 'Compiled successfully in 3.2s', level: 'success' },
-    { stage: 'testing', message: 'Running 24 tests...', level: 'info' },
-    { stage: 'testing', message: 'All tests passed', level: 'success' },
-    { stage: 'deploying', message: 'Uploading deployment package...', level: 'info' },
-    { stage: 'deploying', message: 'Deployment uploaded successfully', level: 'success' },
-    { stage: 'health_check', message: 'Running health check on https://...', level: 'info' },
-    { stage: 'health_check', message: 'Health check passed', level: 'success' },
-  ];
+  if (currentIndex === -1) return logs;
 
-  logMessages.forEach((log, index) => {
-    const logTimestamp = new Date(Date.now() + index * 500).toISOString();
+  const messagesForStage = stageMessages[status];
+  if (!messagesForStage) return logs;
+
+  const baseTimestamp = Date.now();
+  
+  messagesForStage.forEach((msg, index) => {
     logs.push({
-      id: `log_${Date.now()}_${index}`,
+      id: `log_${baseTimestamp}_${commitNumber}_${index}`,
       deploymentId,
-      timestamp: logTimestamp,
-      level: log.level,
-      message: `[${log.stage.toUpperCase()}] ${log.message}`,
+      timestamp: new Date(baseTimestamp + index * 500).toISOString(),
+      level: msg.level,
+      message: `[${status.toUpperCase()}] ${msg.message}`,
     });
   });
 
   return logs;
+}
+
+export function getNextStatus(currentStatus: Deployment['status']): Deployment['status'] | null {
+  const flow: Deployment['status'][] = ['queued', 'installing', 'building', 'testing', 'deploying', 'health_check', 'ready'];
+  const currentIndex = flow.indexOf(currentStatus);
+  if (currentIndex === -1 || currentIndex >= flow.length - 1) return null;
+  return flow[currentIndex + 1];
 }
 
 export function createActivityItem(
@@ -91,13 +120,12 @@ export function createEnvironmentDeployment(
   environment: 'production' | 'preview' | 'development',
   deploymentId: string
 ): EnvironmentDeployment {
-  const projectName = 'my-app';
   return {
     id: `env_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
     projectId,
     environment,
     deploymentId,
-    url: `https://${projectName}-${environment}.vercel.app`,
+    url: `http://localhost:5173/deployment-detail/${deploymentId}`,
     branch: 'main',
     status: 'ready',
     updatedAt: new Date().toISOString(),

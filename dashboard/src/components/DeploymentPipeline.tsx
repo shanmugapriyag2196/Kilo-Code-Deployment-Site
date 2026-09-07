@@ -1,7 +1,6 @@
-import { DeploymentStatus } from '../types';
 import { Check, Circle } from 'lucide-react';
 
-const steps: { status: DeploymentStatus; label: string }[] = [
+const steps: { status: string; label: string }[] = [
   { status: 'queued', label: 'Queued' },
   { status: 'installing', label: 'Installing' },
   { status: 'building', label: 'Building' },
@@ -11,7 +10,7 @@ const steps: { status: DeploymentStatus; label: string }[] = [
   { status: 'ready', label: 'Ready' },
 ];
 
-export default function DeploymentPipeline({ currentStatus }: { currentStatus: DeploymentStatus }) {
+export default function DeploymentPipeline({ currentStatus }: { currentStatus: string }) {
   const currentIndex = steps.findIndex(s => s.status === currentStatus);
   const isComplete = currentStatus === 'ready';
   const isFailed = currentStatus === 'failed' || currentStatus === 'cancelled';

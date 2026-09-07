@@ -1,7 +1,7 @@
-import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
 import { Project, Deployment, EnvironmentDeployment, ActivityItem } from '../types';
 import { storage } from '../lib/storage';
-import { generateMockDeployment, createActivityItem, createEnvironmentDeployment } from '../lib/mockData';
+import { generateMockDeployment, createActivityItem, createEnvironmentDeployment, getNextStatus, generateDeploymentLogsForStage } from '../lib/mockData';
 import { v4 as uuidv4 } from 'uuid';
 
 interface AppState {
@@ -179,6 +179,44 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setDeployments(storage.getDeployments());
     setEnvironments(storage.getEnvironments());
     setActivity(storage.getActivity());
+  }, []);
+
+  useEffect(() => {
+    const activeStatuses: Deployment['status'][] = ['queued', 'installing', 'building', 'testing', 'deploying', 'health_check'];
+    
+    const interval = setInterval(() => {
+      setDeployments(prev => {
+        const hasActive = prev.some(d => activeStatuses.includes(d.status));
+        if (!hasActive) return prev;
+
+        const updated = prev.map(deployment => {
+          if (!activeStatuses.includes(deployment.status)) return deployment;
+
+          const nextStatus = getNextStatus(deployment.status);
+          if (!nextStatus) return deployment;
+
+          const newLogs = generateDeploymentLogsForStage(deployment.id, deployment.commitNumber, nextStatus);
+          const buildDuration = nextStatus === 'ready' ? Math.floor(Math.random() * 5000) + 3000 : deployment.buildDuration;
+          const deploymentUrl = nextStatus === 'ready' ? `http://localhost:5173/deployment-detail/${deployment.id}` : deployment.deploymentUrl;
+
+          return {
+            ...deployment,
+            status: nextStatus,
+            logs: [...deployment.logs, ...newLogs],
+            buildDuration,
+            deploymentUrl,
+          };
+        });
+
+        if (JSON.stringify(updated) !== JSON.stringify(prev)) {
+          storage.saveDeployments(updated);
+        }
+
+        return updated;
+      });
+    }, 2000);
+
+    return () => clearInterval(interval);
   }, []);
 
   return (

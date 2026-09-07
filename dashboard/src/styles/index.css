@@ -3,10 +3,7 @@
 @tailwind utilities;
 
 @layer base {
-  * {
-    border-color: #334157;
-  }
   body {
-    @apply bg-dark font-sans antialiased;
+    @apply bg-slate-950 text-slate-100 antialiased;
   }
 }

@@ -1,69 +1,73 @@
+export type ProjectStatus = 'idle' | 'building' | 'ready' | 'error';
+export type DeploymentStatus = 'queued' | 'installing' | 'building' | 'testing' | 'deploying' | 'health_check' | 'ready' | 'failed' | 'cancelled';
+export type Environment = 'production' | 'preview' | 'development';
+export type Platform = 'vercel' | 'netlify' | 'aws' | 'docker' | 'github-actions';
+
 export interface Project {
   id: string;
   name: string;
-  slug: string;
-  description?: string | null;
-  repoUrl?: string | null;
-  githubRepo?: string | null;
+  description: string;
+  gitRepository: string;
+  framework: string;
   branch: string;
-  buildCommand?: string | null;
-  outputDir?: string | null;
-  framework?: string | null;
+  buildCommand: string;
+  outputDir: string;
+  platform: Platform;
+  status: ProjectStatus;
   createdAt: string;
   updatedAt: string;
-  userId: string;
-  deployments?: Deployment[];
 }
 
 export interface Deployment {
   id: string;
-  projectName: string;
-  status: "PENDING" | "BUILDING" | "DEPLOYING" | "READY" | "ERROR" | "CANCELED";
-  logs: DeploymentLog[];
-  createdAt: string;
-  updatedAt: string;
-  completedAt?: string | null;
-  duration?: number | null;
-  url?: string | null;
-  commitSha?: string | null;
-  commitMessage?: string | null;
-  branch?: string | null;
-  triggeredBy?: string | null;
   projectId: string;
-  project?: Project;
+  projectName: string;
+  environment: Environment;
+  platform: Platform;
+  branch: string;
+  commitSha: string;
+  commitMessage: string;
+  deploymentUrl: string;
+  buildDuration: number;
+  createdAt: string;
+  status: DeploymentStatus;
+  logs: DeploymentLog[];
 }
 
 export interface DeploymentLog {
   id: string;
   deploymentId: string;
   timestamp: string;
-  level: "INFO" | "WARN" | "ERROR" | "DEBUG";
+  level: 'info' | 'warn' | 'error' | 'success';
   message: string;
 }
 
-export interface User {
+export interface EnvironmentDeployment {
   id: string;
-  email: string;
-  name?: string | null;
-  avatarUrl?: string | null;
-  hasGithubAccess: boolean;
-}
-
-export interface GitHubRepo {
-  id: number;
-  name: string;
-  fullName: string;
-  description: string | null;
-  defaultBranch: string;
+  projectId: string;
+  environment: Environment;
+  deploymentId: string;
   url: string;
-  cloneUrl: string;
-  language: string | null;
-  isPrivate: boolean;
-  stars: number;
+  branch: string;
+  status: DeploymentStatus;
   updatedAt: string;
 }
 
-export interface GitHubBranch {
-  name: string;
-  commitSha: string;
+export interface ActivityItem {
+  id: string;
+  type: 'deployment' | 'project_created' | 'project_updated' | 'rollback';
+  message: string;
+  projectId: string;
+  projectName: string;
+  timestamp: string;
 }
+
+export interface PlatformInfo {
+  id: Platform;
+  name: string;
+  icon: string;
+  description: string;
+  connected: boolean;
+}
+
+export type Page = 'overview' | 'projects' | 'project-detail' | 'deployments' | 'deployment-detail' | 'environments' | 'platforms' | 'activity' | 'logs' | 'settings';

@@ -1,36 +1,23 @@
-import { useEffect, useState } from "react";
-import api from "../services/api";
-import { Project } from "../types";
-import ProjectCard from "../components/ProjectCard";
-import { Link, useNavigate } from "react-router-dom";
-import { Plus, GitBranch, Loader, RefreshCw, AlertCircle } from "lucide-react";
-import GitHubService from "../services/githubService";
+import { useState } from 'react';
+import { useApp } from '../stores/AppContext';
+import { Plus, Search, Trash2, Rocket } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import StatusBadge from '../components/StatusBadge';
+import NewProjectModal from './NewProjectModal';
 
-export default function ProjectsPage() {
-  const navigate = useNavigate();
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [githubConnected, setGithubConnected] = useState(false);
+export default function ProjectsPage({ onNavigateToProject }: { onNavigateToProject: (id: string) => void }) {
+  const { projects, deleteProject } = useApp();
+  const [showModal, setShowModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const filteredProjects = projects.filter(project =>
+    project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    project.description.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const res = await api.get("/projects");
-      setProjects(res.data);
-      setError(null);
-
-      const ghService = new GitHubService();
-      const status = await ghService.getConnectionStatus();
-      setGithubConnected(status.connected);
-    } catch (error: any) {
-      setError(error?.response?.data?.error || "Failed to load projects");
-    } finally {
-      setLoading(false);
+  const handleDelete = (id: string, name: string) => {
+    if (confirm(`Are you sure you want to delete "${name}"?`)) {
+      deleteProject(id);
     }
   };
 
@@ -38,79 +25,95 @@ export default function ProjectsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Projects</h1>
-          <p className="text-gray-400">Manage your deployment projects</p>
+          <h1 className="text-3xl font-bold text-white">Projects</h1>
+          <p className="text-slate-400 mt-1">Manage your deployment projects</p>
         </div>
-        <div className="flex gap-3">
-          <button
-            onClick={fetchData}
-            className="rounded-lg border border-dark-border px-4 py-2 text-sm font-medium hover:bg-dark-border/30"
-            disabled={loading}
-          >
-            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-          </button>
-          <Link
-            to="/projects/create"
-            className="flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-500"
-          >
-            <Plus className="h-4 w-4" />
-            New Project
-          </Link>
-        </div>
+        <button
+          onClick={() => setShowModal(true)}
+          className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-lg font-medium text-sm flex items-center gap-2 transition-colors"
+        >
+          <Plus className="w-4 h-4" />
+          New Project
+        </button>
       </div>
 
-      {!githubConnected && (
-        <div className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-4">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="mt-0.5 h-5 w-5 text-yellow-400" />
-            <div>
-              <p className="font-medium text-yellow-400">GitHub not connected</p>
-              <p className="mt-1 text-sm text-gray-400">
-                You need to connect your GitHub account to create projects.
-              </p>
-              <button
-                onClick={() => navigate("/settings")}
-                className="mt-2 rounded-lg bg-primary-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-primary-500"
-              >
-                Connect GitHub
-              </button>
-            </div>
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+        <input
+          type="text"
+          placeholder="Search projects..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full pl-10 pr-4 py-2.5 bg-slate-900 border border-slate-800 rounded-lg text-slate-200 placeholder-slate-400 focus:outline-none focus:border-blue-500"
+        />
+      </div>
+
+      {filteredProjects.length === 0 ? (
+        <div className="text-center py-16">
+          <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Rocket className="w-8 h-8 text-slate-600" />
           </div>
+          <h3 className="text-lg font-medium text-white mb-2">No projects yet</h3>
+          <p className="text-slate-400 mb-6">Create your first project to get started</p>
+          <button
+            onClick={() => setShowModal(true)}
+            className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-lg font-medium transition-colors"
+          >
+            Create Project
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredProjects.map((project) => (
+            <div
+              key={project.id}
+              className="bg-slate-900 border border-slate-800 rounded-xl p-6 hover:border-slate-700 transition-colors"
+            >
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-lg font-semibold text-white truncate">{project.name}</h3>
+                  <p className="text-sm text-slate-400 mt-1 line-clamp-2">{project.description}</p>
+                </div>
+                <StatusBadge status={project.status} />
+              </div>
+              
+              <div className="space-y-2 mb-4">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-slate-400">Framework</span>
+                  <span className="text-slate-200">{project.framework}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-slate-400">Branch</span>
+                  <span className="text-slate-200">{project.branch}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-slate-400">Platform</span>
+                  <span className="text-slate-200 capitalize">{project.platform}</span>
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-4 border-t border-slate-800">
+                <Link
+                  to={`/project-detail/${project.id}`}
+                  className="flex-1 text-center bg-blue-600 hover:bg-blue-500 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                  onClick={() => onNavigateToProject(project.id)}
+                >
+                  View Details
+                </Link>
+                <button
+                  onClick={() => handleDelete(project.id, project.name)}
+                  className="px-3 py-2 border border-slate-700 rounded-lg text-slate-400 hover:text-red-400 hover:border-red-500/30 transition-colors"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
-      {loading ? (
-        <div className="py-12 text-center">
-          <Loader className="mx-auto h-8 w-8 animate-spin text-primary-500" />
-        </div>
-      ) : error ? (
-        <div className="py-12 text-center">
-          <AlertCircle className="mx-auto mb-2 h-6 w-6 text-red-500" />
-          <p className="text-gray-400">{error}</p>
-        </div>
-      ) : projects.length === 0 ? (
-        <div className="py-16 text-center">
-          <GitBranch className="mx-auto mb-4 h-12 w-12 text-gray-600" />
-          <h3 className="mb-2 text-lg font-medium">No projects yet</h3>
-          <p className="text-gray-500 mb-6">
-            Create a project to get started with deployments
-          </p>
-          <Link
-            to="/projects/create"
-            className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-500"
-          >
-            <Plus className="h-4 w-4" />
-            Create First Project
-          </Link>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {projects.map((project) => (
-            <Link key={project.id} to={`/projects/${project.id}`}>
-              <ProjectCard project={project} />
-            </Link>
-          ))}
-        </div>
+      {showModal && (
+        <NewProjectModal onClose={() => setShowModal(false)} />
       )}
     </div>
   );

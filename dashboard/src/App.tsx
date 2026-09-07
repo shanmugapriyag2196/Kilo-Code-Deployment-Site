@@ -1,53 +1,45 @@
-import { Routes, Route, Navigate } from "react-router-dom";
-import { useAuth } from "./stores/authContext";
-import Layout from "./components/Layout";
-import LoginPage from "./pages/LoginPage";
-import AuthCallback from "./pages/AuthCallback";
-import DashboardPage from "./pages/DashboardPage";
-import ProjectsPage from "./pages/ProjectsPage";
-import ProjectCreatePage from "./pages/ProjectCreatePage";
-import ProjectDetailPage from "./pages/ProjectDetailPage";
-import DeploymentsPage from "./pages/DeploymentsPage";
-import DeploymentDetailPage from "./pages/DeploymentDetailPage";
-import SettingsPage from "./pages/SettingsPage";
-import AnalyticsPage from "./pages/AnalyticsPage";
+import { Routes, Route, Navigate } from 'react-router-dom';
+import Layout from './components/Layout';
+import OverviewPage from './pages/OverviewPage';
+import ProjectsPage from './pages/ProjectsPage';
+import ProjectDetailPage from './pages/ProjectDetailPage';
+import DeploymentsPage from './pages/DeploymentsPage';
+import DeploymentDetailPage from './pages/DeploymentDetailPage';
+import EnvironmentsPage from './pages/EnvironmentsPage';
+import PlatformsPage from './pages/PlatformsPage';
+import ActivityPage from './pages/ActivityPage';
+import LogsPage from './pages/LogsPage';
+import SettingsPage from './pages/SettingsPage';
+import NewProjectModal from './pages/NewProjectModal';
+import { useApp } from './stores/AppContext';
+import { useState } from 'react';
 
-function App() {
-  const { user, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-lg">Loading...</div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/auth/callback" element={<AuthCallback />} />
-        <Route path="*" element={<LoginPage />} />
-      </Routes>
-    );
-  }
+function AppContent() {
+  const [showNewProject, setShowNewProject] = useState(false);
+  const { selectProject } = useApp();
 
   return (
-    <Layout>
+    <>
+      <Layout onNewProject={() => setShowNewProject(true)} />
+      {showNewProject && <NewProjectModal onClose={() => setShowNewProject(false)} />}
       <Routes>
-        <Route path="/" element={<DashboardPage />} />
-        <Route path="/projects" element={<ProjectsPage />} />
-        <Route path="/projects/create" element={<ProjectCreatePage />} />
-        <Route path="/projects/:id" element={<ProjectDetailPage />} />
+        <Route path="/" element={<OverviewPage />} />
+        <Route path="/overview" element={<OverviewPage />} />
+        <Route path="/projects" element={<ProjectsPage onNavigateToProject={selectProject} />} />
+        <Route path="/project-detail/:id" element={<ProjectDetailPage />} />
         <Route path="/deployments" element={<DeploymentsPage />} />
-        <Route path="/deployments/:id" element={<DeploymentDetailPage />} />
+        <Route path="/deployment-detail/:id" element={<DeploymentDetailPage />} />
+        <Route path="/environments" element={<EnvironmentsPage />} />
+        <Route path="/platforms" element={<PlatformsPage />} />
+        <Route path="/activity" element={<ActivityPage />} />
+        <Route path="/logs" element={<LogsPage />} />
         <Route path="/settings" element={<SettingsPage />} />
-        <Route path="/analytics" element={<AnalyticsPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </Layout>
+    </>
   );
 }
 
-export default App;
+export default function App() {
+  return <AppContent />;
+}

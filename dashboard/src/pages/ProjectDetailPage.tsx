@@ -1,192 +1,174 @@
-import { useEffect, useState } from "react";
-import api from "../services/api";
-import { Project, Deployment } from "../types";
-import { useParams } from "react-router-dom";
-import { Rocket, GitBranch, Globe, Calendar, Copy, Check } from "lucide-react";
-import DeploymentProgress from "../components/DeploymentProgress";
+import { useParams, Link } from 'react-router-dom';
+import { useApp } from '../stores/AppContext';
+import { ArrowLeft, GitBranch, Clock, ExternalLink, Copy, Check } from 'lucide-react';
+import StatusBadge from '../components/StatusBadge';
+import DeploymentPipeline from '../components/DeploymentPipeline';
+import DeployButton from '../components/DeployButton';
+import { useState } from 'react';
 
 export default function ProjectDetailPage() {
-  const { id } = useParams();
-  const [project, setProject] = useState<Project | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [deploying, setDeploying] = useState(false);
+  const { id } = useParams<{ id: string }>();
+  const { projects, deployments, deployProject, environments } = useApp();
   const [copied, setCopied] = useState(false);
 
-  useEffect(() => {
-    fetchProject();
-  }, [id]);
+  const project = projects.find(p => p.id === id);
+  const projectDeployments = deployments.filter(d => d.projectId === id);
+  const latestDeployment = projectDeployments[0];
+  const projectEnvironments = environments.filter(e => e.projectId === id);
 
-  const fetchProject = async () => {
-    setLoading(true);
-    try {
-      const res = await api.get(`/projects/${id}`);
-      setProject(res.data);
-    } catch (error) {
-      console.error("Failed to fetch project", error);
-    } finally {
-      setLoading(false);
-    }
+  if (!project) {
+    return (
+      <div className="text-center py-16">
+        <p className="text-slate-400">Project not found</p>
+        <Link to="/projects" className="text-blue-400 hover:text-blue-300 mt-4 inline-block">
+          Back to Projects
+        </Link>
+      </div>
+    );
+  }
+
+  const handleDeploy = (projectId: string, environment: 'production' | 'preview' | 'development') => {
+    deployProject(projectId, environment);
   };
 
-  const handleDeploy = async () => {
-    setDeploying(true);
-    try {
-      const res = await api.post(`/projects/${id}/deploy`, {});
-      const newDeployment: Deployment = res.data;
-      setProject((prev) =>
-        prev
-          ? {
-              ...prev,
-              deployments: [newDeployment, ...(prev.deployments || [])],
-            }
-          : prev
-      );
-    } catch (error: any) {
-      console.error("Failed to deploy", error);
-      alert(error?.response?.data?.error || "Failed to deploy");
-    } finally {
-      setDeploying(false);
-    }
-  };
-
-  const handleCopyLink = (url?: string) => {
-    if (!url) return;
-    navigator.clipboard.writeText(url);
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  if (loading) {
-    return <div className="py-12 text-center text-gray-400">Loading...</div>;
-  }
-
-  if (!project) {
-    return <div className="py-12 text-center text-gray-400">Project not found</div>;
-  }
-
-  const latest = project.deployments?.[0];
-
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">{project.name}</h1>
-          <p className="text-gray-400 mt-1">{project.description || "No description"}</p>
-        </div>
-        <button
-          onClick={handleDeploy}
-          disabled={deploying}
-          className="flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-500 disabled:opacity-50"
+      <div className="flex items-center gap-4">
+        <Link
+          to="/projects"
+          className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
         >
-          <Rocket className="h-4 w-4" />
-          {deploying ? "Deploying..." : "Deploy"}
-        </button>
+          <ArrowLeft className="w-5 h-5 text-slate-400" />
+        </Link>
+        <div className="flex-1">
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold text-white">{project.name}</h1>
+            <StatusBadge status={project.status} />
+          </div>
+          <p className="text-slate-400 mt-1">{project.description}</p>
+        </div>
+        <DeployButton
+          projectId={project.id}
+          onDeploy={handleDeploy}
+          isDeploying={project.status === 'building'}
+        />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <div className="rounded-lg border border-dark-border bg-dark-card p-4">
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <GitBranch className="h-4 w-4" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+          <div className="flex items-center gap-2 text-sm text-slate-400 mb-1">
+            <GitBranch className="w-4 h-4" />
             Branch
           </div>
-          <p className="mt-1 font-medium">{project.branch}</p>
+          <p className="text-white font-medium">{project.branch}</p>
         </div>
-        <div className="rounded-lg border border-dark-border bg-dark-card p-4">
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <Globe className="h-4 w-4" />
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+          <div className="flex items-center gap-2 text-sm text-slate-400 mb-1">
+            <ExternalLink className="w-4 h-4" />
             Repository
           </div>
-          <p className="mt-1 font-medium">{project.githubRepo}</p>
+          <p className="text-white font-medium text-sm truncate">{project.gitRepository}</p>
         </div>
-        <div className="rounded-lg border border-dark-border bg-dark-card p-4">
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <Calendar className="h-4 w-4" />
-            Created
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+          <div className="flex items-center gap-2 text-sm text-slate-400 mb-1">
+            <Clock className="w-4 h-4" />
+            Last Updated
           </div>
-          <p className="mt-1 font-medium">
-            {new Date(project.createdAt).toLocaleDateString()}
-          </p>
+          <p className="text-white font-medium">{new Date(project.updatedAt).toLocaleDateString()}</p>
         </div>
       </div>
 
-      {latest && (
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold">Latest Deployment</h2>
-          <div className="rounded-lg border border-dark-border bg-dark-card p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <span className="font-medium">{latest.projectName}</span>
-                <span
-                  className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                    latest.status === "READY"
-                      ? "bg-green-500/20 text-green-400"
-                      : latest.status === "BUILDING" || latest.status === "DEPLOYING"
-                      ? "bg-yellow-500/20 text-yellow-400"
-                      : latest.status === "ERROR"
-                      ? "bg-red-500/20 text-red-400"
-                      : "bg-gray-500/20 text-gray-400"
-                  }`}
-                >
-                  {latest.status}
-                </span>
+      <div>
+        <h2 className="text-xl font-semibold text-white mb-4">Production Deployment</h2>
+        {latestDeployment && latestDeployment.environment === 'production' ? (
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <div className="flex items-center gap-3 mb-2">
+                  <StatusBadge status={latestDeployment.status} />
+                  <span className="text-sm text-slate-400">
+                    {latestDeployment.commitSha && `#${latestDeployment.commitSha.substring(0, 7)}`}
+                  </span>
+                </div>
+                <p className="text-slate-300">{latestDeployment.commitMessage}</p>
               </div>
-              {latest.commitSha && (
-                <span className="text-sm text-gray-500">
-                  {latest.commitSha.substring(0, 7)}
-                </span>
-              )}
             </div>
 
-            <DeploymentProgress status={latest.status} />
-
-            {latest.url && (
-              <div className="mt-6 flex items-center justify-between rounded-lg border border-dark-border bg-dark p-3">
-                <span className="text-sm">{latest.url}</span>
+            {latestDeployment.deploymentUrl && (
+              <div className="flex items-center gap-2 p-3 bg-slate-800 rounded-lg">
+                <ExternalLink className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                <span className="text-sm text-slate-200 flex-1 truncate">{latestDeployment.deploymentUrl}</span>
                 <button
-                  onClick={() => handleCopyLink(latest.url!)}
-                  className="rounded-lg bg-dark-border/50 px-3 py-1.5 text-sm hover:bg-dark-border"
+                  onClick={() => copyToClipboard(latestDeployment.deploymentUrl)}
+                  className="text-slate-400 hover:text-slate-200 flex-shrink-0"
                 >
-                  {copied ? <Check className="h-4 w-4 text-green-400" /> : <Copy className="h-4 w-4" />}
+                  {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
                 </button>
               </div>
             )}
+
+            <div className="mt-4">
+              <DeploymentPipeline currentStatus={latestDeployment.status} />
+            </div>
+          </div>
+        ) : (
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 text-center">
+            <p className="text-slate-400">No production deployment yet</p>
+            <DeployButton
+              projectId={project.id}
+              onDeploy={handleDeploy}
+              isDeploying={project.status === 'building'}
+            />
+          </div>
+        )}
+      </div>
+
+      {projectEnvironments.length > 0 && (
+        <div>
+          <h2 className="text-xl font-semibold text-white mb-4">Environments</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {projectEnvironments.map(env => (
+              <div key={env.id} className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-medium text-white capitalize">{env.environment}</h3>
+                  <StatusBadge status={env.status} />
+                </div>
+                <p className="text-sm text-slate-400 truncate">{env.url}</p>
+                <p className="text-xs text-slate-500 mt-2">{env.branch}</p>
+              </div>
+            ))}
           </div>
         </div>
       )}
 
-      {project.deployments && project.deployments.length > 0 && (
+      {projectDeployments.length > 0 && (
         <div>
-          <h2 className="text-lg font-semibold mb-4">All Deployments</h2>
+          <h2 className="text-xl font-semibold text-white mb-4">Recent Deployments</h2>
           <div className="space-y-3">
-            {project.deployments.slice(1).map((deployment: Deployment) => (
-              <a
+            {projectDeployments.slice(0, 10).map(deployment => (
+              <Link
                 key={deployment.id}
-                href={`/deployments/${deployment.id}`}
-                className="block rounded-lg border border-dark-border bg-dark-card p-4 hover:border-primary-500/30"
+                to={`/deployment-detail/${deployment.id}`}
+                className="block bg-slate-900 border border-slate-800 rounded-xl p-4 hover:border-slate-700 transition-colors"
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="font-medium">{deployment.projectName}</span>
-                    <span className="mx-2 text-gray-600">/</span>
-                    <span className="text-sm text-gray-500">
-                      {deployment.commitSha?.substring(0, 7) || "No commit"}
-                    </span>
+                    <div className="flex items-center gap-3 mb-1">
+                      <span className="text-sm font-medium text-white capitalize">{deployment.environment}</span>
+                      <StatusBadge status={deployment.status} />
+                    </div>
+                    <p className="text-sm text-slate-400">
+                      {deployment.commitSha && `#${deployment.commitSha.substring(0, 7)}`} • {new Date(deployment.createdAt).toLocaleString()}
+                    </p>
                   </div>
-                  <span
-                    className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                      deployment.status === "READY"
-                        ? "bg-green-500/20 text-green-400"
-                        : deployment.status === "BUILDING" || deployment.status === "DEPLOYING"
-                        ? "bg-yellow-500/20 text-yellow-400"
-                        : deployment.status === "ERROR"
-                        ? "bg-red-500/20 text-red-400"
-                        : "bg-gray-500/20 text-gray-400"
-                    }`}
-                  >
-                    {deployment.status}
-                  </span>
                 </div>
-              </a>
+              </Link>
             ))}
           </div>
         </div>

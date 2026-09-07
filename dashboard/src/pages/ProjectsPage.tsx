@@ -82,10 +82,6 @@ export default function ProjectsPage({ onNavigateToProject }: { onNavigateToProj
                   <span className="text-slate-400">Branch</span>
                   <span className="text-slate-200">{project.branch}</span>
                 </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-slate-400">Platform</span>
-                  <span className="text-slate-200 capitalize">{project.platform}</span>
-                </div>
               </div>
 
               <div className="flex gap-2 pt-4 border-t border-slate-800">

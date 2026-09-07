@@ -29,7 +29,7 @@ export function generateMockDeployment(projectId: string, projectName: string, e
     commitSha,
     commitNumber,
     commitMessage,
-    deploymentUrl: `https://${projectName.toLowerCase().replace(/\s+/g, '-')}-${environment}.vercel.app`,
+    deploymentUrl: `http://localhost:5173/deployment-detail/${id}`,
     buildDuration: 0,
     createdAt: new Date().toISOString(),
     status: 'queued',

@@ -103,6 +103,13 @@ export default function DeploymentDetailPage() {
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
           <div className="flex items-center gap-2 text-sm text-slate-400 mb-1">
             <GitBranch className="w-4 h-4" />
+            Commit
+          </div>
+          <p className="text-white font-medium">#{deployment.commitNumber}</p>
+        </div>
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+          <div className="flex items-center gap-2 text-sm text-slate-400 mb-1">
+            <GitBranch className="w-4 h-4" />
             Branch
           </div>
           <p className="text-white font-medium">{deployment.branch}</p>
@@ -121,24 +128,23 @@ export default function DeploymentDetailPage() {
           </div>
           <p className="text-white font-medium">{deployment.buildDuration ? `${deployment.buildDuration}ms` : '-'}</p>
         </div>
+      </div>
+
+      {deployment.deploymentUrl && (
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
           <div className="flex items-center gap-2 text-sm text-slate-400 mb-1">
             <ExternalLink className="w-4 h-4" />
-            URL
+            Deployment URL
           </div>
-          {deployment.deploymentUrl ? (
-            <button
-              onClick={() => copyToClipboard(deployment.deploymentUrl)}
-              className="text-blue-400 hover:text-blue-300 text-sm truncate flex items-center gap-1"
-            >
-              {copied ? <Check className="w-3 h-3" /> : <ExternalLink className="w-3 h-3" />}
-              {deployment.deploymentUrl.replace('https://', '')}
-            </button>
-          ) : (
-            <p className="text-slate-500">Not deployed</p>
-          )}
+          <button
+            onClick={() => copyToClipboard(deployment.deploymentUrl)}
+            className="text-blue-400 hover:text-blue-300 text-sm truncate flex items-center gap-1"
+          >
+            {copied ? <Check className="w-3 h-3" /> : <ExternalLink className="w-3 h-3" />}
+            {deployment.deploymentUrl.replace('https://', '')}
+          </button>
         </div>
-      </div>
+      )}
 
       <div className="border-b border-slate-800">
         <div className="flex gap-6">

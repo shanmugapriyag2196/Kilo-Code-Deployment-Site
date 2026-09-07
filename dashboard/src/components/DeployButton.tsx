@@ -4,11 +4,12 @@ import { Environment } from '../types';
 
 interface DeployButtonProps {
   projectId: string;
+  commitNumber: number;
   onDeploy: (projectId: string, environment: Environment) => void;
   isDeploying: boolean;
 }
 
-export default function DeployButton({ projectId, onDeploy, isDeploying }: DeployButtonProps) {
+export default function DeployButton({ projectId, commitNumber, onDeploy, isDeploying }: DeployButtonProps) {
   const [showModal, setShowModal] = useState(false);
   const [environment, setEnvironment] = useState<Environment>('production');
   const [branch, setBranch] = useState('main');
@@ -68,6 +69,10 @@ export default function DeployButton({ projectId, onDeploy, isDeploying }: Deplo
                   onChange={(e) => setBranch(e.target.value)}
                   className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-slate-200 focus:outline-none focus:border-blue-500"
                 />
+              </div>
+
+              <div className="bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-3 text-sm text-slate-300">
+                Next commit number: <span className="font-medium text-white">#{commitNumber + 1}</span>
               </div>
 
               <div className="flex gap-3 pt-4">

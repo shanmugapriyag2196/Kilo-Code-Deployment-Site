@@ -70,6 +70,7 @@ export default function DeploymentsPage() {
                   </div>
                   <p className="text-sm text-slate-400 mb-2">{deployment.commitMessage}</p>
                   <div className="flex items-center gap-4 text-sm text-slate-500">
+                    <span className="font-medium text-slate-300">#{deployment.commitNumber}</span>
                     <span className="capitalize">{deployment.environment}</span>
                     <span>•</span>
                     <span>{deployment.branch}</span>

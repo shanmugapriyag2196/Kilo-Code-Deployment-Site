@@ -11,10 +11,11 @@ export default function ProjectDetailPage() {
   const { projects, deployments, deployProject, environments } = useApp();
   const [copied, setCopied] = useState(false);
 
-  const project = projects.find(p => p.id === id);
+      const project = projects.find(p => p.id === id);
   const projectDeployments = deployments.filter(d => d.projectId === id);
   const latestDeployment = projectDeployments[0];
   const projectEnvironments = environments.filter(e => e.projectId === id);
+  const nextCommitNumber = projectDeployments.length > 0 ? Math.max(...projectDeployments.map(d => d.commitNumber)) + 1 : 1;
 
   if (!project) {
     return (
@@ -55,6 +56,7 @@ export default function ProjectDetailPage() {
         </div>
         <DeployButton
           projectId={project.id}
+          commitNumber={nextCommitNumber}
           onDeploy={handleDeploy}
           isDeploying={project.status === 'building'}
         />
@@ -122,6 +124,7 @@ export default function ProjectDetailPage() {
             <p className="text-slate-400">No production deployment yet</p>
             <DeployButton
               projectId={project.id}
+              commitNumber={nextCommitNumber}
               onDeploy={handleDeploy}
               isDeploying={project.status === 'building'}
             />
@@ -164,7 +167,7 @@ export default function ProjectDetailPage() {
                       <StatusBadge status={deployment.status} />
                     </div>
                     <p className="text-sm text-slate-400">
-                      {deployment.commitSha && `#${deployment.commitSha.substring(0, 7)}`} • {new Date(deployment.createdAt).toLocaleString()}
+                      <span className="font-medium text-slate-300">#{deployment.commitNumber}</span> • {deployment.commitSha && `#${deployment.commitSha.substring(0, 7)}`} • {new Date(deployment.createdAt).toLocaleString()}
                     </p>
                   </div>
                 </div>

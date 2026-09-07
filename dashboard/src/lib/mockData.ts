@@ -13,7 +13,7 @@ const commitMessages = [
   'feat: add real-time notifications',
 ];
 
-export function generateMockDeployment(projectId: string, projectName: string, environment: 'production' | 'preview' | 'development' = 'production'): Deployment {
+export function generateMockDeployment(projectId: string, projectName: string, environment: 'production' | 'preview' | 'development' = 'production', commitNumber: number = 1): Deployment {
   const id = `deploy_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
   const commitSha = Math.random().toString(36).substring(2, 9);
   const commitMessage = commitMessages[Math.floor(Math.random() * commitMessages.length)];
@@ -27,6 +27,7 @@ export function generateMockDeployment(projectId: string, projectName: string, e
     platform,
     branch: 'main',
     commitSha,
+    commitNumber,
     commitMessage,
     deploymentUrl: `https://${projectName.toLowerCase().replace(/\s+/g, '-')}-${environment}.vercel.app`,
     buildDuration: 0,

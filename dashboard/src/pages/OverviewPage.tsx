@@ -156,7 +156,7 @@ export default function OverviewPage() {
                   <div>
                     <p className="text-sm font-medium text-white">{deployment.projectName}</p>
                     <p className="text-xs text-slate-400 mt-1">
-                      {deployment.commitSha && `#${deployment.commitSha.substring(0, 7)}`} • {deployment.environment}
+                      <span className="font-medium">#{deployment.commitNumber}</span> • {deployment.commitSha && `#${deployment.commitSha.substring(0, 7)}`} • {deployment.environment}
                     </p>
                   </div>
                   <StatusBadge status={deployment.status} />

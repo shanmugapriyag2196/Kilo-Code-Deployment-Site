@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
 import { useApp } from '../stores/AppContext';
-import { Platform } from '../types';
 
 interface NewProjectModalProps {
   onClose: () => void;
@@ -14,7 +13,6 @@ export default function NewProjectModal({ onClose }: NewProjectModalProps) {
     description: '',
     gitRepository: '',
     branch: 'main',
-    platform: 'vercel' as Platform,
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -88,23 +86,6 @@ export default function NewProjectModal({ onClose }: NewProjectModalProps) {
               onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
               className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-slate-200 focus:outline-none focus:border-blue-500"
             />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              Deployment Platform
-            </label>
-            <select
-              value={formData.platform}
-              onChange={(e) => setFormData({ ...formData, platform: e.target.value as Platform })}
-              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-slate-200 focus:outline-none focus:border-blue-500"
-            >
-              <option value="vercel">Vercel</option>
-              <option value="netlify">Netlify</option>
-              <option value="aws">AWS</option>
-              <option value="docker">Docker</option>
-              <option value="github-actions">GitHub Actions</option>
-            </select>
           </div>
 
           <div className="flex gap-3 pt-4">

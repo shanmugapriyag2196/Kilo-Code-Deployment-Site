@@ -9,7 +9,7 @@ export interface Project {
   description: string;
   gitRepository: string;
   branch: string;
-  platform: Platform;
+  platform?: Platform;
   status: ProjectStatus;
   createdAt: string;
   updatedAt: string;
@@ -23,6 +23,7 @@ export interface Deployment {
   platform: Platform;
   branch: string;
   commitSha: string;
+  commitNumber: number;
   commitMessage: string;
   deploymentUrl: string;
   buildDuration: number;

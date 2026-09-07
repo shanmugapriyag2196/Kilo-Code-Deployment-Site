@@ -61,6 +61,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const project: Project = {
       ...projectData,
       id: uuidv4(),
+      platform: projectData.platform || 'vercel',
       status: 'idle',
       createdAt: now,
       updatedAt: now,
@@ -106,7 +107,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const project = projects.find(p => p.id === projectId);
     if (!project) throw new Error('Project not found');
 
-    const deployment = generateMockDeployment(projectId, project.name, environment);
+    const existingDeployments = deployments.filter(d => d.projectId === projectId);
+    const commitNumber = existingDeployments.length > 0 ? Math.max(...existingDeployments.map(d => d.commitNumber)) + 1 : 1;
+
+    const deployment = generateMockDeployment(projectId, project.name, environment, commitNumber);
     const newDeployments = [deployment, ...deployments];
     persistDeployments(newDeployments);
 
@@ -141,7 +145,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const existing = deployments.find(d => d.id === deploymentId);
     if (!existing) throw new Error('Deployment not found');
 
-    const newDeployment = generateMockDeployment(existing.projectId, existing.projectName, existing.environment);
+    const existingDeployments = deployments.filter(d => d.projectId === existing.projectId);
+    const commitNumber = existingDeployments.length > 0 ? Math.max(...existingDeployments.map(d => d.commitNumber)) + 1 : 1;
+
+    const newDeployment = generateMockDeployment(existing.projectId, existing.projectName, existing.environment, commitNumber);
     newDeployment.branch = existing.branch;
     const newDeployments = [newDeployment, ...deployments];
     persistDeployments(newDeployments);

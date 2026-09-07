@@ -1,19 +1,15 @@
 import { useParams, Link } from 'react-router-dom';
 import { useApp } from '../stores/AppContext';
-import { ArrowLeft, GitBranch, Clock, ExternalLink, Copy, Check } from 'lucide-react';
+import { ArrowLeft, GitBranch, Clock, ExternalLink, Rocket } from 'lucide-react';
 import StatusBadge from '../components/StatusBadge';
-import DeploymentPipeline from '../components/DeploymentPipeline';
 import DeployButton from '../components/DeployButton';
-import { useState } from 'react';
 
 export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { projects, deployments, deployProject, environments } = useApp();
-  const [copied, setCopied] = useState(false);
 
-      const project = projects.find(p => p.id === id);
+  const project = projects.find(p => p.id === id);
   const projectDeployments = deployments.filter(d => d.projectId === id);
-  const latestDeployment = projectDeployments[0];
   const projectEnvironments = environments.filter(e => e.projectId === id);
   const nextCommitNumber = projectDeployments.length > 0 ? Math.max(...projectDeployments.map(d => d.commitNumber)) + 1 : 1;
 
@@ -30,12 +26,6 @@ export default function ProjectDetailPage() {
 
   const handleDeploy = (projectId: string, environment: 'production' | 'preview' | 'development') => {
     deployProject(projectId, environment);
-  };
-
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
@@ -86,51 +76,60 @@ export default function ProjectDetailPage() {
         </div>
       </div>
 
-      <div>
-        <h2 className="text-xl font-semibold text-white mb-4">Production Deployment</h2>
-        {latestDeployment && latestDeployment.environment === 'production' ? (
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <div className="flex items-center gap-3 mb-2">
-                  <StatusBadge status={latestDeployment.status} />
-                  <span className="text-sm text-slate-400">
-                    {latestDeployment.commitSha && `#${latestDeployment.commitSha.substring(0, 7)}`}
-                  </span>
+      {projectDeployments.length > 0 && (
+        <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-800">
+            <h2 className="text-xl font-semibold text-white">Deployments</h2>
+            <p className="text-sm text-slate-400 mt-1">{projectDeployments.length} deployment{projectDeployments.length !== 1 ? 's' : ''}</p>
+          </div>
+          
+          <div className="divide-y divide-slate-800">
+            {projectDeployments.map((deployment) => (
+              <Link
+                key={deployment.id}
+                to={`/deployment-detail/${deployment.id}`}
+                className="flex items-center justify-between p-4 hover:bg-slate-800/50 transition-colors"
+              >
+                <div className="flex items-center gap-4 flex-1 min-w-0">
+                  <div className="flex-shrink-0">
+                    <div className="w-10 h-10 bg-slate-800 rounded-lg flex items-center justify-center">
+                      <span className="text-sm font-bold text-slate-300">#{deployment.commitNumber}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <StatusBadge status={deployment.status} />
+                      <span className="text-xs text-slate-500">{deployment.branch}</span>
+                    </div>
+                    <p className="text-sm text-slate-300 truncate">{deployment.commitMessage}</p>
+                    <p className="text-xs text-slate-500 mt-1">
+                      {deployment.commitSha && `SHA: ${deployment.commitSha.substring(0, 7)}`} • {new Date(deployment.createdAt).toLocaleString()}
+                    </p>
+                  </div>
                 </div>
-                <p className="text-slate-300">{latestDeployment.commitMessage}</p>
-              </div>
-            </div>
 
-            {latestDeployment.deploymentUrl && (
-              <div className="flex items-center gap-2 p-3 bg-slate-800 rounded-lg">
-                <ExternalLink className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                <span className="text-sm text-slate-200 flex-1 truncate">{latestDeployment.deploymentUrl}</span>
-                <button
-                  onClick={() => copyToClipboard(latestDeployment.deploymentUrl)}
-                  className="text-slate-400 hover:text-slate-200 flex-shrink-0"
-                >
-                  {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
-                </button>
-              </div>
-            )}
-
-            <div className="mt-4">
-              <DeploymentPipeline currentStatus={latestDeployment.status} />
-            </div>
+                <div className="flex items-center gap-3 ml-4">
+                  {deployment.deploymentUrl && deployment.status === 'ready' && (
+                    <a
+                      href={deployment.deploymentUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-slate-400 hover:text-slate-200"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
+                  )}
+                  <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </Link>
+            ))}
           </div>
-        ) : (
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 text-center">
-            <p className="text-slate-400">No production deployment yet</p>
-            <DeployButton
-              projectId={project.id}
-              commitNumber={nextCommitNumber}
-              onDeploy={handleDeploy}
-              isDeploying={project.status === 'building'}
-            />
-          </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {projectEnvironments.length > 0 && (
         <div>
@@ -150,30 +149,16 @@ export default function ProjectDetailPage() {
         </div>
       )}
 
-      {projectDeployments.length > 0 && (
-        <div>
-          <h2 className="text-xl font-semibold text-white mb-4">Recent Deployments</h2>
-          <div className="space-y-3">
-            {projectDeployments.slice(0, 10).map(deployment => (
-              <Link
-                key={deployment.id}
-                to={`/deployment-detail/${deployment.id}`}
-                className="block bg-slate-900 border border-slate-800 rounded-xl p-4 hover:border-slate-700 transition-colors"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center gap-3 mb-1">
-                      <span className="text-sm font-medium text-white capitalize">{deployment.environment}</span>
-                      <StatusBadge status={deployment.status} />
-                    </div>
-                    <p className="text-sm text-slate-400">
-                      <span className="font-medium text-slate-300">#{deployment.commitNumber}</span> • {deployment.commitSha && `#${deployment.commitSha.substring(0, 7)}`} • {new Date(deployment.createdAt).toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
+      {projectDeployments.length === 0 && (
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 text-center">
+          <Rocket className="w-12 h-12 text-slate-700 mx-auto mb-4" />
+          <p className="text-slate-400 mb-4">No deployments yet</p>
+          <DeployButton
+            projectId={project.id}
+            commitNumber={nextCommitNumber}
+            onDeploy={handleDeploy}
+            isDeploying={project.status === 'building'}
+          />
         </div>
       )}
     </div>

@@ -1,0 +1,79 @@
+# Deployment Platform
+
+A deployment platform similar to Vercel, providing GitHub integration, project management, and deployment orchestration.
+
+## Project Structure
+
+```
+deployment-platform/
+├── api/           # Backend API (Express + TypeScript)
+├── dashboard/     # Frontend Dashboard (React + Vite + Tailwind)
+├── prisma/        # Database schema
+├── .env           # Environment variables
+└── AGENTS.md      # Development guidance
+```
+
+## Prerequisites
+
+- Node.js >= 20
+- npm >= 10
+- Git
+
+## Setup
+
+### 1. Clone the repository
+
+```bash
+git clone <repo-url>
+cd deployment-platform
+```
+
+### 2. Backend Setup
+
+```bash
+cd api
+npm install
+cp .env.example .env
+# Update .env with your actual values
+npm run prisma:push
+npm run dev
+```
+
+The API will start on `http://localhost:3001`.
+
+### 3. Frontend Setup
+
+```bash
+cd dashboard
+npm install
+cp .env.example .env
+npm run dev
+```
+
+The dashboard will be available at `http://localhost:5173`.
+
+## GitHub OAuth Setup
+
+1. Go to https://github.com/settings/developers
+2. Click "New OAuth App"
+3. Set Authorization callback URL to `http://localhost:3001/api/auth/github/callback`
+4. Copy the Client ID and Client Secret
+5. Paste them into `api/.env` as `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`
+
+## Development Commands
+
+### Backend (api/)
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+- `npm run prisma:generate` - Generate Prisma client
+- `npm run prisma:push` - Push schema to database
+- `npm run lint` - Run ESLint
+- `npm run typecheck` - Run TypeScript type checking
+
+### Frontend (dashboard/)
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build
+- `npm run lint` - Run ESLint
+- `npm run typecheck` - Run TypeScript type checking

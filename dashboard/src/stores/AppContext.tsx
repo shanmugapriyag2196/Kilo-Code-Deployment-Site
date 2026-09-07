@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useCallback, useEffect, ReactNode 
 import { Project, Deployment, EnvironmentDeployment, ActivityItem } from '../types';
 import { storage } from '../lib/storage';
 import { generateMockDeployment, createActivityItem, createEnvironmentDeployment, getNextStatus, generateDeploymentLogsForStage } from '../lib/mockData';
+import { fetchCommitsFromGitHub } from '../services/githubService';
 import { v4 as uuidv4 } from 'uuid';
 
 interface AppState {
@@ -15,6 +16,7 @@ interface AppState {
 
 interface AppContextType extends AppState {
   createProject: (project: Omit<Project, 'id' | 'createdAt' | 'updatedAt' | 'status'>) => Project;
+  syncProjectFromGitHub: (projectId: string) => Promise<Deployment[]>;
   updateProject: (id: string, updates: Partial<Project>) => void;
   deleteProject: (id: string) => void;
   selectProject: (id: string | null) => void;
@@ -74,6 +76,65 @@ export function AppProvider({ children }: { children: ReactNode }) {
     
     return project;
   }, [projects, activity]);
+
+  const syncProjectFromGitHub = useCallback(async (projectId: string): Promise<Deployment[]> => {
+    const project = projects.find(p => p.id === projectId);
+    if (!project || !project.gitRepository) return [];
+
+    const commits = await fetchCommitsFromGitHub(project.gitRepository);
+    if (commits.length === 0) return [];
+
+    const newDeployments: Deployment[] = [];
+    const now = new Date().toISOString();
+
+    commits.forEach((commit, index) => {
+      const commitNumber = index + 1;
+      const deploymentId = `deploy_${Date.now()}_${index}_${Math.random().toString(36).substring(2, 6)}`;
+      const deployment: Deployment = {
+        id: deploymentId,
+        projectId,
+        projectName: project.name,
+        environment: 'production',
+        platform: project.platform || 'vercel',
+        branch: 'main',
+        commitSha: commit.sha,
+        commitNumber,
+        commitMessage: commit.message.split('\n')[0],
+        deploymentUrl: `http://localhost:5173/deployment-detail/${deploymentId}`,
+        buildDuration: Math.floor(Math.random() * 5000) + 2000,
+        createdAt: new Date(Date.now() - (commits.length - index) * 60000).toISOString(),
+        status: 'ready',
+        logs: generateDeploymentLogsForStage(deploymentId, commitNumber, 'ready'),
+      };
+      newDeployments.push(deployment);
+    });
+
+    const allDeployments = [...newDeployments, ...deployments];
+    persistDeployments(allDeployments);
+
+    const envDeployment = {
+      id: `env_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      projectId,
+      environment: 'production' as const,
+      deploymentId: newDeployments[0].id,
+      url: `http://localhost:5173/deployment-detail/${newDeployments[0].id}`,
+      branch: 'main',
+      status: 'ready' as const,
+      updatedAt: now,
+    };
+
+    const existingProd = environments.find(e => e.projectId === projectId && e.environment === 'production');
+    if (existingProd) {
+      persistEnvironments(environments.map(e => e.id === existingProd.id ? envDeployment : e));
+    } else {
+      persistEnvironments([envDeployment, ...environments]);
+    }
+
+    const activityItem = createActivityItem('deployment', projectId, project.name, `Synced ${commits.length} commits from GitHub`);
+    persistActivity([activityItem, ...activity]);
+
+    return newDeployments;
+  }, [projects, deployments, environments, activity]);
 
   const updateProject = useCallback((id: string, updates: Partial<Project>) => {
     const newProjects = projects.map(p => 
@@ -220,7 +281,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AppContext.Provider value={{
+    <AppContext.Provider     value={{
       projects,
       deployments,
       environments,
@@ -228,6 +289,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       selectedProjectId,
       selectedDeploymentId,
       createProject,
+      syncProjectFromGitHub,
       updateProject,
       deleteProject,
       selectProject,

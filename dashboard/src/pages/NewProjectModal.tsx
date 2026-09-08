@@ -123,6 +123,14 @@ export default function NewProjectModal({ onClose }: NewProjectModalProps) {
               </button>
               <button
                 type="button"
+                onClick={handleSubmit}
+                className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 px-4 py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2 border border-slate-700 transition-colors"
+              >
+                <Github className="w-5 h-5" />
+                Connect with GitHub
+              </button>
+              <button
+                type="button"
                 onClick={onClose}
                 className="px-4 py-2.5 border border-slate-700 rounded-lg text-slate-300 hover:bg-slate-800 transition-colors"
               >

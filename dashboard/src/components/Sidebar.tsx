@@ -10,8 +10,10 @@ import {
   Settings,
   Plus,
   User,
+  Github,
 } from 'lucide-react';
 import { Page } from '../types';
+import { useApp } from '../stores/AppContext';
 
 const navItems: { path: Page; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { path: 'overview', label: 'Overview', icon: LayoutDashboard },
@@ -26,6 +28,9 @@ const navItems: { path: Page; label: string; icon: React.ComponentType<{ classNa
 
 export default function Sidebar({ onNewProject }: { onNewProject: () => void }) {
   const location = useLocation();
+  const { projects } = useApp();
+
+  const githubConnectedProjects = projects.filter(p => p.gitRepository.includes('github.com')).length;
 
   return (
     <aside className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col h-screen">
@@ -73,6 +78,20 @@ export default function Sidebar({ onNewProject }: { onNewProject: () => void }) 
       </div>
 
       <div className="mt-auto p-4 border-t border-slate-800">
+        {githubConnectedProjects > 0 ? (
+          <div className="flex items-center gap-3 px-3 py-2 mb-3 text-green-400">
+            <Github className="w-5 h-5" />
+            <span className="text-sm">
+              {githubConnectedProjects} GitHub {githubConnectedProjects === 1 ? 'project' : 'projects'} connected
+            </span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-3 px-3 py-2 mb-3 text-slate-500">
+            <Github className="w-5 h-5" />
+            <span className="text-sm">No GitHub projects connected</span>
+          </div>
+        )}
+
         <div className="flex items-center gap-3 px-3 py-2">
           <div className="w-8 h-8 bg-slate-800 rounded-full flex items-center justify-center">
             <User className="w-4 h-4 text-slate-400" />

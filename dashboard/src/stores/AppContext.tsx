@@ -107,7 +107,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         commitSha: commit.sha,
         commitNumber,
         commitMessage: commit.message.split('\n')[0],
-        deploymentUrl: `http://localhost:5173/deployment-detail/${deploymentId}`,
+        deploymentUrl: `https://${project.name.replace(/\s+/g, '-').toLowerCase()}-${project.branch}.vercel.app`,
         buildDuration: Math.floor(Math.random() * 5000) + 2000,
         createdAt: new Date(Date.now() - (commits.length - index) * 60000).toISOString(),
         status: 'ready',
@@ -124,7 +124,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       projectId,
       environment: 'production' as const,
       deploymentId: newDeployments[0].id,
-      url: `http://localhost:5173/deployment-detail/${newDeployments[0].id}`,
+      url: `https://${project.name.replace(/\s+/g, '-').toLowerCase()}-production.vercel.app`,
       branch: 'main',
       status: 'ready' as const,
       updatedAt: now,
@@ -186,7 +186,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     persistActivity([activityItem, ...activity]);
 
     if (environment === 'production') {
-      const envDeployment = createEnvironmentDeployment(projectId, 'production', deployment.id);
+      const envDeployment = createEnvironmentDeployment(projectId, project.name, 'production', deployment.id);
       const existingProd = environments.find(e => e.projectId === projectId && e.environment === 'production');
       if (existingProd) {
         persistEnvironments(environments.map(e => e.id === existingProd.id ? envDeployment : e));

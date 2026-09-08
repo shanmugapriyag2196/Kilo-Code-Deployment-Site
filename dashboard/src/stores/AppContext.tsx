@@ -295,7 +295,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
           const newLogs = generateDeploymentLogsForStage(deployment.id, deployment.commitNumber, nextStatus);
           const buildDuration = nextStatus === 'ready' ? Math.floor(Math.random() * 5000) + 3000 : deployment.buildDuration;
-          const deploymentUrl = nextStatus === 'ready' ? `http://localhost:5173/deployment-detail/${deployment.id}` : deployment.deploymentUrl;
+          const deploymentUrl = nextStatus === 'ready'
+            ? `https://${deployment.projectName.replace(/\s+/g, '-').toLowerCase()}-${deployment.environment}.vercel.app`
+            : deployment.deploymentUrl;
 
           return {
             ...deployment,

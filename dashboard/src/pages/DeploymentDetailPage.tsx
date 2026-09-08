@@ -1,4 +1,4 @@
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useApp } from '../stores/AppContext';
 import { ArrowLeft, ExternalLink, Check, Rocket, GitBranch, Clock, RefreshCw, Trash2, FileCode } from 'lucide-react';
 import StatusBadge from '../components/StatusBadge';
@@ -10,6 +10,7 @@ import { parseGitHubRepo } from '../services/githubService';
 
 export default function DeploymentDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { deployments, redeploy, cancelDeployment, getCommitTree, projects } = useApp();
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'logs' | 'code'>('overview');
@@ -103,15 +104,13 @@ export default function DeploymentDetailPage() {
 
       <div className="flex gap-3">
         {deployment.deploymentUrl && deployment.status === 'ready' && (
-          <a
-            href={deployment.deploymentUrl}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            onClick={() => navigate(`/preview/${deployment.id}`)}
             className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 transition-colors"
           >
             <ExternalLink className="w-4 h-4" />
-            Visit
-          </a>
+            Preview
+          </button>
         )}
         <button
           onClick={handleRedeploy}

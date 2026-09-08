@@ -13,30 +13,31 @@ export default function DeploymentDetailPage() {
   const { deployments, redeploy, cancelDeployment, getCommitTree, projects } = useApp();
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'logs' | 'code'>('overview');
-  const [commitFiles, setCommitFiles] = useState<Array<{ path: string; type: 'blob' | 'tree' }>>([]);
-  const [selectedFile, setSelectedFile] = useState<{ path: string; content: string } | null>(null);
+   const [commitFiles, setCommitFiles] = useState<Array<{ path: string; type: 'blob' | 'tree' }>>([]);
+   const [codeLoading, setCodeLoading] = useState(false);
+   const [selectedFile, setSelectedFile] = useState<{ path: string; content: string } | null>(null);
 
   const deployment = deployments.find(d => d.id === id);
 
-  useEffect(() => {
-    const loadCommitTree = async () => {
-      if (!deployment || !id) return;
-      
-      try {
-        const tree = await getCommitTree(id);
-        const files = tree.map(item => ({
-          path: item.path,
-          type: item.type as 'blob' | 'tree',
-        }));
-        setCommitFiles(files);
-      } catch (error) {
-        console.error('Failed to load commit tree:', error);
-        setCommitFiles([]);
-      }
-    };
+  const loadCommitTree = async (force = false) => {
+    if (!deployment || !id) return;
+    
+    try {
+      const tree = await getCommitTree(id, force);
+      const files = tree.map(item => ({
+        path: item.path,
+        type: item.type as 'blob' | 'tree',
+      }));
+      setCommitFiles(files);
+    } catch (error) {
+      console.error('Failed to load commit tree:', error);
+      setCommitFiles([]);
+    }
+  };
 
+  useEffect(() => {
     loadCommitTree();
-  }, [deployment, id, getCommitTree]);
+  }, [deployment, id]);
 
   if (!deployment) {
     return (
@@ -223,6 +224,21 @@ export default function DeploymentDetailPage() {
 
       {activeTab === 'code' && (
         <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-white">Commit Files</h3>
+            <button
+              onClick={() => {
+                setCodeLoading(true);
+                setSelectedFile(null);
+                loadCommitTree(true).finally(() => setCodeLoading(false));
+              }}
+              disabled={codeLoading}
+              className="text-xs text-slate-400 hover:text-slate-200 flex items-center gap-1 transition-colors"
+            >
+              <RefreshCw className={`w-3 h-3 ${codeLoading ? 'animate-spin' : ''}`} />
+              {codeLoading ? 'Syncing...' : 'Refresh'}
+            </button>
+          </div>
           {selectedFile ? (
             <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
               <div className="flex items-center justify-between mb-4">
@@ -243,6 +259,11 @@ export default function DeploymentDetailPage() {
                 </pre>
               </div>
             </div>
+          ) : codeLoading ? (
+            <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 text-center">
+              <RefreshCw className="w-6 h-6 text-slate-500 animate-spin mx-auto mb-2" />
+              <p className="text-slate-400">Syncing commit files from GitHub...</p>
+            </div>
           ) : (
             <CodeViewer
               files={commitFiles}
@@ -250,7 +271,7 @@ export default function DeploymentDetailPage() {
             />
           )}
         </div>
-      )}
+       )}
     </div>
   );
 }

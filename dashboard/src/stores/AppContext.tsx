@@ -26,7 +26,7 @@ interface AppContextType extends AppState {
   rollback: (projectId: string) => void;
   selectDeployment: (id: string | null) => void;
   refreshData: () => void;
-  getCommitTree: (deploymentId: string) => Promise<GitHubTreeItem[]>;
+  getCommitTree: (deploymentId: string, force?: boolean) => Promise<GitHubTreeItem[]>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -93,8 +93,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     const newDeployments: Deployment[] = [];
     const now = new Date().toISOString();
-    const repoInfo = parseGitHubRepo(project.gitRepository);
-    const newCommitTrees: Record<string, GitHubTreeItem[]> = {};
 
     commits.forEach((commit, index) => {
       const commitNumber = index + 1;
@@ -116,15 +114,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         logs: generateDeploymentLogsForStage(deploymentId, commitNumber, 'ready'),
       };
       newDeployments.push(deployment);
-
-      if (repoInfo) {
-        newCommitTrees[deploymentId] = [];
-      }
     });
 
     const allDeployments = [...newDeployments, ...deployments];
     persistDeployments(allDeployments);
-    persistCommitTrees({ ...commitTrees, ...newCommitTrees });
 
     const envDeployment = {
       id: `env_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
@@ -245,12 +238,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     persistActivity([activityItem, ...activity]);
   }, [projects, deployments, activity]);
 
-  const getCommitTree = useCallback(async (deploymentId: string): Promise<GitHubTreeItem[]> => {
+  const getCommitTree = useCallback(async (deploymentId: string, force = false): Promise<GitHubTreeItem[]> => {
     const deployment = deployments.find(d => d.id === deploymentId);
     if (!deployment) return [];
     
-    const cached = commitTrees[deploymentId];
-    if (cached) return cached;
+    if (!force) {
+      const cached = commitTrees[deploymentId];
+      if (cached && cached.length > 0) return cached;
+    }
 
     const project = projects.find(p => p.id === deployment.projectId);
     if (!project?.gitRepository) return [];
@@ -259,8 +254,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (!repoInfo) return [];
 
     const tree = await fetchCommitTree(repoInfo.owner, repoInfo.repo, deployment.commitSha);
-    const newCommitTrees = { ...commitTrees, [deploymentId]: tree };
-    persistCommitTrees(newCommitTrees);
+    if (tree.length > 0) {
+      const newCommitTrees = { ...commitTrees, [deploymentId]: tree };
+      persistCommitTrees(newCommitTrees);
+    }
     
     return tree;
   }, [deployments, projects, commitTrees]);

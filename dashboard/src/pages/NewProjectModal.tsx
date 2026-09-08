@@ -18,29 +18,27 @@ export default function NewProjectModal({ onClose }: NewProjectModalProps) {
   const [syncing, setSyncing] = useState(false);
   const [syncMessage, setSyncMessage] = useState('');
 
+  const isValidGitHubUrl = formData.gitRepository.includes('github.com');
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const project = createProject(formData);
     setCreatedProjectId(project.id);
     setSyncMessage('');
-  };
 
-  const handleSync = async () => {
-    if (!createdProjectId) return;
-    setSyncing(true);
-    setSyncMessage('Syncing commits from GitHub...');
-    
-    try {
-      const deployments = await syncProjectFromGitHub(createdProjectId);
-      setSyncMessage(`Successfully synced ${deployments.length} commits from GitHub!`);
-    } catch {
-      setSyncMessage('Failed to sync from GitHub. Please check the repository URL.');
-    } finally {
-      setSyncing(false);
+    if (isValidGitHubUrl) {
+      setSyncing(true);
+      setSyncMessage('Syncing commits from GitHub...');
+      syncProjectFromGitHub(project.id, project).then((deployments) => {
+        if (deployments.length > 0) {
+          setSyncMessage(`Successfully synced ${deployments.length} commits from GitHub!`);
+        } else {
+          setSyncMessage('No commits found. Please check the repository URL.');
+        }
+        setSyncing(false);
+      });
     }
   };
-
-  const isValidGitHubUrl = formData.gitRepository.includes('github.com');
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -99,7 +97,7 @@ export default function NewProjectModal({ onClose }: NewProjectModalProps) {
               {isValidGitHubUrl && (
                 <p className="text-xs text-green-400 mt-1 flex items-center gap-1">
                   <Github className="w-3 h-3" />
-                  GitHub repository detected - you can sync commits after creating the project
+                  GitHub repository detected - commits will sync automatically
                 </p>
               )}
             </div>
@@ -146,19 +144,21 @@ export default function NewProjectModal({ onClose }: NewProjectModalProps) {
 
             {isValidGitHubUrl && (
               <div className="space-y-4">
-                <button
-                  onClick={handleSync}
-                  disabled={syncing}
-                  className="w-full bg-green-600 hover:bg-green-500 disabled:bg-slate-700 disabled:cursor-not-allowed text-white px-4 py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
-                >
-                  <Github className="w-5 h-5" />
-                  {syncing ? 'Syncing from GitHub...' : 'Sync Commits from GitHub'}
-                </button>
+                {syncing ? (
+                  <div className="flex items-center justify-center gap-2 text-slate-300">
+                    <Github className="w-5 h-5 animate-spin" />
+                    Syncing commits from GitHub...
+                  </div>
+                ) : (
+                  <div className="text-center text-slate-400">
+                    Auto-syncing commits...
+                  </div>
+                )}
 
                 {syncMessage && (
                   <div className={`p-4 rounded-lg ${
-                    syncMessage.includes('Failed') 
-                      ? 'bg-red-500/10 border border-red-500/30 text-red-400' 
+                    syncMessage.includes('Failed') || syncMessage.includes('No commits')
+                      ? 'bg-red-500/10 border border-red-500/30 text-red-400'
                       : 'bg-green-500/10 border border-green-500/30 text-green-400'
                   }`}>
                     {syncMessage}

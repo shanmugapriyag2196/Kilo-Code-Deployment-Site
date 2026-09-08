@@ -16,7 +16,7 @@ interface AppState {
 
 interface AppContextType extends AppState {
   createProject: (project: Omit<Project, 'id' | 'createdAt' | 'updatedAt' | 'status'>) => Project;
-  syncProjectFromGitHub: (projectId: string) => Promise<Deployment[]>;
+  syncProjectFromGitHub: (projectId: string, projectOverride?: Project) => Promise<Deployment[]>;
   updateProject: (id: string, updates: Partial<Project>) => void;
   deleteProject: (id: string) => void;
   selectProject: (id: string | null) => void;
@@ -84,8 +84,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return project;
   }, [projects, activity]);
 
-  const syncProjectFromGitHub = useCallback(async (projectId: string): Promise<Deployment[]> => {
-    const project = projects.find(p => p.id === projectId);
+  const syncProjectFromGitHub = useCallback(async (projectId: string, projectOverride?: Project): Promise<Deployment[]> => {
+    const project = projectOverride || projects.find(p => p.id === projectId);
     if (!project || !project.gitRepository) return [];
 
     const commits = await fetchCommitsFromGitHub(project.gitRepository);

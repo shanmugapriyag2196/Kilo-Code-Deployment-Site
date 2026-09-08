@@ -1,12 +1,15 @@
 import { useParams, Link } from 'react-router-dom';
 import { useApp } from '../stores/AppContext';
-import { ArrowLeft, GitBranch, Clock, ExternalLink, Rocket } from 'lucide-react';
+import { ArrowLeft, GitBranch, Clock, ExternalLink, Rocket, Github, RefreshCw } from 'lucide-react';
 import StatusBadge from '../components/StatusBadge';
 import DeployButton from '../components/DeployButton';
+import { useState } from 'react';
 
 export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { projects, deployments, deployProject, environments } = useApp();
+  const { projects, deployments, deployProject, environments, syncProjectFromGitHub, isGitHubConnected } = useApp();
+  const [syncing, setSyncing] = useState(false);
+  const [syncMessage, setSyncMessage] = useState('');
 
   const project = projects.find(p => p.id === id);
   const projectDeployments = deployments.filter(d => d.projectId === id);
@@ -24,11 +27,23 @@ export default function ProjectDetailPage() {
     );
   }
 
-  const handleDeploy = (projectId: string, environment: 'production' | 'preview' | 'development') => {
-    deployProject(projectId, environment);
-  };
+   const handleDeploy = (projectId: string, environment: 'production' | 'preview' | 'development') => {
+     deployProject(projectId, environment);
+   };
 
-  return (
+   const handleSyncCommits = async () => {
+     setSyncing(true);
+     setSyncMessage('Fetching commits from GitHub...');
+     const newDeployments = await syncProjectFromGitHub(project.id);
+     if (newDeployments.length > 0) {
+       setSyncMessage(`Synced ${newDeployments.length} commits from GitHub!`);
+     } else {
+       setSyncMessage('No new commits found or failed to fetch. Check repository URL and connection.');
+     }
+     setSyncing(false);
+   };
+
+   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
         <Link
@@ -44,13 +59,33 @@ export default function ProjectDetailPage() {
           </div>
           <p className="text-slate-400 mt-1">{project.description}</p>
         </div>
-        <DeployButton
-          projectId={project.id}
-          commitNumber={nextCommitNumber}
-          onDeploy={handleDeploy}
-          isDeploying={project.status === 'building'}
-        />
-      </div>
+         <DeployButton
+           projectId={project.id}
+           commitNumber={nextCommitNumber}
+           onDeploy={handleDeploy}
+           isDeploying={project.status === 'building'}
+         />
+         {project.gitRepository && (
+           <button
+             onClick={handleSyncCommits}
+             disabled={syncing}
+             className="bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-slate-200 px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 transition-colors border border-slate-700"
+           >
+             <Github className="w-4 h-4" />
+             {syncing ? 'Syncing...' : 'Sync Commits'}
+           </button>
+         )}
+       </div>
+
+       {syncMessage && (
+         <div className={`p-4 rounded-lg ${
+           syncMessage.includes('No new') || syncMessage.includes('failed') || syncMessage.includes('Check')
+             ? 'bg-red-500/10 border border-red-500/30 text-red-400'
+             : 'bg-green-500/10 border border-green-500/30 text-green-400'
+         }`}>
+           {syncMessage}
+         </div>
+       )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
@@ -76,12 +111,22 @@ export default function ProjectDetailPage() {
         </div>
       </div>
 
-      {projectDeployments.length > 0 && (
-        <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-800">
-            <h2 className="text-xl font-semibold text-white">Deployments</h2>
-            <p className="text-sm text-slate-400 mt-1">{projectDeployments.length} deployment{projectDeployments.length !== 1 ? 's' : ''}</p>
-          </div>
+       {projectDeployments.length > 0 && (
+         <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
+           <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
+             <div>
+               <h2 className="text-xl font-semibold text-white">Deployments</h2>
+               <p className="text-sm text-slate-400 mt-1">
+                 {projectDeployments.length} deployment{projectDeployments.length !== 1 ? 's' : ''}
+                 {isGitHubConnected && (
+                   <span className="text-green-400"> • Connected to GitHub</span>
+                 )}
+               </p>
+             </div>
+             {isGitHubConnected && (
+               <RefreshCw className="w-4 h-4 text-green-400" />
+             )}
+           </div>
           
           <div className="divide-y divide-slate-800">
             {projectDeployments.map((deployment) => (

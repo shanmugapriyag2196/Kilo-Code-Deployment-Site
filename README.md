@@ -54,11 +54,16 @@ The dashboard will be available at `http://localhost:5173`.
 
 ## GitHub OAuth Setup
 
+The dashboard uses GitHub OAuth with PKCE (Proof Key for Code Exchange) to authenticate users and access their GitHub data. This flow is handled entirely on the frontend — no backend is required.
+
 1. Go to https://github.com/settings/developers
 2. Click "New OAuth App"
-3. Set Authorization callback URL to `http://localhost:3001/api/auth/github/callback`
-4. Copy the Client ID and Client Secret
-5. Paste them into `api/.env` as `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`
+3. Set **Authorization callback URL** to your frontend URL, e.g. `http://localhost:5173`
+4. Copy the **Client ID** (no client secret is needed with PKCE)
+5. Paste it into `dashboard/.env` as `VITE_GITHUB_CLIENT_ID`
+6. Set `VITE_GITHUB_REDIRECT_URI` to the same callback URL (e.g. `http://localhost:5173`)
+
+Once configured, a **Connect with GitHub** button appears in the New Project modal and the sidebar. After connecting, the dashboard can fetch all commits (authenticated, 5000 req/hr rate limit) and display them as deployments.
 
 ## Development Commands
 

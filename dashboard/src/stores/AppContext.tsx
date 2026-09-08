@@ -2,7 +2,17 @@ import { createContext, useContext, useState, useCallback, useEffect, ReactNode 
 import { Project, Deployment, EnvironmentDeployment, ActivityItem, GitHubTreeItem } from '../types';
 import { storage } from '../lib/storage';
 import { generateMockDeployment, createActivityItem, createEnvironmentDeployment, getNextStatus, generateDeploymentLogsForStage } from '../lib/mockData';
-import { fetchCommitsFromGitHub, fetchCommitTree, parseGitHubRepo } from '../services/githubService';
+import {
+  fetchCommitsFromGitHub,
+  fetchCommitTree,
+  parseGitHubRepo,
+  getGitHubAuthUrl,
+  handleGitHubCallback,
+  getStoredGitHubToken,
+  getStoredGitHubUser,
+  clearGitHubAuth,
+} from '../services/githubService';
+import type { GitHubUser } from '../services/githubService';
 import { v4 as uuidv4 } from 'uuid';
 
 interface AppState {
@@ -15,6 +25,11 @@ interface AppState {
 }
 
 interface AppContextType extends AppState {
+  githubToken: string | null;
+  githubUser: GitHubUser | null;
+  isGitHubConnected: boolean;
+  connectGitHub: () => Promise<void>;
+  disconnectGitHub: () => void;
   createProject: (project: Omit<Project, 'id' | 'createdAt' | 'updatedAt' | 'status'>) => Project;
   syncProjectFromGitHub: (projectId: string, projectOverride?: Project) => Promise<Deployment[]>;
   updateProject: (id: string, updates: Partial<Project>) => void;
@@ -39,6 +54,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [selectedDeploymentId, setSelectedDeploymentId] = useState<string | null>(null);
   const [commitTrees, setCommitTrees] = useState<Record<string, GitHubTreeItem[]>>({});
+  const [githubToken, setGithubToken] = useState<string | null>(null);
+  const [githubUser, setGithubUser] = useState<GitHubUser | null>(null);
 
   const persistProjects = (newProjects: Project[]) => {
     setProjects(newProjects);
@@ -280,6 +297,33 @@ export function AppProvider({ children }: { children: ReactNode }) {
     } catch {
       setCommitTrees({});
     }
+   }, []);
+
+  const connectGitHub = useCallback(async () => {
+    const authUrl = await getGitHubAuthUrl();
+    window.location.href = authUrl;
+  }, []);
+
+  const disconnectGitHub = useCallback(() => {
+    clearGitHubAuth();
+    setGithubToken(null);
+    setGithubUser(null);
+  }, []);
+
+  useEffect(() => {
+    const initGitHubAuth = async () => {
+      const result = await handleGitHubCallback();
+      if (result) {
+        setGithubToken(result.token);
+        setGithubUser(result.user);
+      } else {
+        const token = getStoredGitHubToken();
+        const user = getStoredGitHubUser();
+        if (token) setGithubToken(token);
+        if (user) setGithubUser(user);
+      }
+    };
+    initGitHubAuth();
   }, []);
 
   useEffect(() => {
@@ -321,26 +365,31 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AppContext.Provider     value={{
-      projects,
-      deployments,
-      environments,
-      activity,
-      selectedProjectId,
-      selectedDeploymentId,
-      createProject,
-      syncProjectFromGitHub,
-      updateProject,
-      deleteProject,
-      selectProject,
-      deployProject,
-      cancelDeployment,
-      redeploy,
-      rollback,
-      selectDeployment,
-      refreshData,
-      getCommitTree,
-    }}>
+     <AppContext.Provider     value={{
+       projects,
+       deployments,
+       environments,
+       activity,
+       selectedProjectId,
+       selectedDeploymentId,
+       githubToken,
+       githubUser,
+       isGitHubConnected: !!githubToken,
+       connectGitHub,
+       disconnectGitHub,
+       createProject,
+       syncProjectFromGitHub,
+       updateProject,
+       deleteProject,
+       selectProject,
+       deployProject,
+       cancelDeployment,
+       redeploy,
+       rollback,
+       selectDeployment,
+       refreshData,
+       getCommitTree,
+     }}>
       {children}
     </AppContext.Provider>
   );

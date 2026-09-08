@@ -10,10 +10,8 @@ import {
   Settings,
   Plus,
   User,
-  Github,
 } from 'lucide-react';
 import { Page } from '../types';
-import { useApp } from '../stores/AppContext';
 
 const navItems: { path: Page; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { path: 'overview', label: 'Overview', icon: LayoutDashboard },
@@ -28,7 +26,6 @@ const navItems: { path: Page; label: string; icon: React.ComponentType<{ classNa
 
 export default function Sidebar({ onNewProject }: { onNewProject: () => void }) {
   const location = useLocation();
-  const { isGitHubConnected, githubUser, connectGitHub, disconnectGitHub } = useApp();
 
   return (
     <aside className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col h-screen">
@@ -76,35 +73,6 @@ export default function Sidebar({ onNewProject }: { onNewProject: () => void }) 
       </div>
 
       <div className="mt-auto p-4 border-t border-slate-800">
-        <div className="space-y-3 mb-4">
-          {isGitHubConnected && githubUser ? (
-            <div
-              onClick={disconnectGitHub}
-              className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-800/50 cursor-pointer transition-colors"
-              title="Click to disconnect GitHub"
-            >
-              <img
-                src={githubUser.avatar_url}
-                alt={githubUser.login}
-                className="w-6 h-6 rounded-full"
-              />
-              <div className="flex-1 min-w-0">
-                <p className="text-xs text-slate-400">GitHub</p>
-                <p className="text-sm font-medium text-white truncate">@{githubUser.login}</p>
-              </div>
-              <span className="w-2 h-2 bg-green-400 rounded-full"></span>
-            </div>
-          ) : (
-            <button
-              onClick={() => connectGitHub()}
-              className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-lg font-medium text-sm border border-slate-700 transition-colors"
-            >
-              <Github className="w-4 h-4" />
-              Connect GitHub
-            </button>
-          )}
-        </div>
-
         <div className="flex items-center gap-3 px-3 py-2">
           <div className="w-8 h-8 bg-slate-800 rounded-full flex items-center justify-center">
             <User className="w-4 h-4 text-slate-400" />

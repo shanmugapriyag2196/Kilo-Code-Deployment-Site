@@ -7,7 +7,7 @@ interface NewProjectModalProps {
 }
 
 export default function NewProjectModal({ onClose }: NewProjectModalProps) {
-  const { createProject, syncProjectFromGitHub, isGitHubConnected, githubUser, connectGitHub, disconnectGitHub } = useApp();
+  const { createProject, syncProjectFromGitHub } = useApp();
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -94,6 +94,12 @@ export default function NewProjectModal({ onClose }: NewProjectModalProps) {
                 className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-slate-200 focus:outline-none focus:border-blue-500"
                 placeholder="https://github.com/username/repo"
               />
+              {isValidGitHubUrl && (
+                <p className="text-xs text-green-400 mt-1 flex items-center gap-1">
+                  <Github className="w-3 h-3" />
+                  GitHub repository detected - commits will sync automatically
+                </p>
+              )}
             </div>
 
             <div>
@@ -106,56 +112,6 @@ export default function NewProjectModal({ onClose }: NewProjectModalProps) {
                 onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
                 className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-slate-200 focus:outline-none focus:border-blue-500"
               />
-            </div>
-
-            <div className="border-t border-slate-800 pt-4">
-              <label className="block text-sm font-medium text-slate-300 mb-3">
-                GitHub Connection
-              </label>
-
-              {isGitHubConnected && githubUser ? (
-                <div className="flex items-center justify-between p-3 bg-slate-800/50 border border-slate-700 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={githubUser.avatar_url}
-                      alt={githubUser.login}
-                      className="w-8 h-8 rounded-full"
-                    />
-                    <div>
-                      <p className="text-sm font-medium text-white">{githubUser.name || githubUser.login}</p>
-                      <p className="text-xs text-slate-400">@{githubUser.login}</p>
-                    </div>
-                  </div>
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-500/20 text-green-300 border border-green-500/30">
-                    Connected
-                  </span>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={connectGitHub}
-                  className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-200 px-4 py-2.5 rounded-lg font-medium border border-slate-700 transition-colors"
-                >
-                  <Github className="w-5 h-5" />
-                  Connect with GitHub
-                </button>
-              )}
-
-              {isGitHubConnected && (
-                <button
-                  type="button"
-                  onClick={disconnectGitHub}
-                  className="mt-2 text-xs text-slate-400 hover:text-red-400 transition-colors"
-                >
-                  Disconnect GitHub
-                </button>
-              )}
-
-              {!isGitHubConnected && isValidGitHubUrl && (
-                <p className="text-xs text-slate-400 mt-2">
-                  Connect GitHub for higher rate limits and access to private repositories.
-                </p>
-              )}
             </div>
 
             <div className="flex gap-3 pt-4">
@@ -188,13 +144,6 @@ export default function NewProjectModal({ onClose }: NewProjectModalProps) {
 
             {isValidGitHubUrl && (
               <div className="space-y-4">
-                {isGitHubConnected && (
-                  <div className="flex items-center gap-2 text-xs text-green-400">
-                    <Github className="w-3 h-3" />
-                    Using authenticated GitHub connection
-                  </div>
-                )}
-
                 {syncing ? (
                   <div className="flex items-center justify-center gap-2 text-slate-300">
                     <Github className="w-5 h-5 animate-spin" />

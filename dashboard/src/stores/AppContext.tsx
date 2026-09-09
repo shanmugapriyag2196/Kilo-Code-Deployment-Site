@@ -107,7 +107,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         commitSha: commit.sha,
         commitNumber,
         commitMessage: commit.message.split('\n')[0],
-        deploymentUrl: `https://${project.name.replace(/\s+/g, '-').toLowerCase()}-${project.branch}.vercel.app`,
+        deploymentUrl: `/preview/${deploymentId}`,
         buildDuration: Math.floor(Math.random() * 5000) + 2000,
         createdAt: new Date(Date.now() - (commits.length - index) * 60000).toISOString(),
         status: 'ready',
@@ -124,7 +124,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       projectId,
       environment: 'production' as const,
       deploymentId: newDeployments[0].id,
-      url: `https://${project.name.replace(/\s+/g, '-').toLowerCase()}-production.vercel.app`,
+      url: `/preview/${newDeployments[0].id}`,
       branch: 'main',
       status: 'ready' as const,
       updatedAt: now,
@@ -279,38 +279,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  useEffect(() => {
-    const migrateUrls = () => {
-      const needsMigration = deployments.some(d => d.deploymentUrl?.startsWith('http://localhost'));
-      const envNeedsMigration = environments.some(e => e.url?.startsWith('http://localhost'));
-      if (!needsMigration && !envNeedsMigration) return;
 
-      const migratedDeployments = deployments.map(d => {
-        if (!d.deploymentUrl?.startsWith('http://localhost')) return d;
-        const project = projects.find(p => p.id === d.projectId);
-        const projectSlug = project?.name.replace(/\s+/g, '-').toLowerCase() || 'project';
-        return {
-          ...d,
-          deploymentUrl: `https://${projectSlug}-${d.environment}.vercel.app`,
-        };
-      });
-
-      const migratedEnvironments = environments.map(e => {
-        if (!e.url?.startsWith('http://localhost')) return e;
-        const project = projects.find(p => p.id === e.projectId);
-        const projectSlug = project?.name.replace(/\s+/g, '-').toLowerCase() || 'project';
-        return {
-          ...e,
-          url: `https://${projectSlug}-${e.environment}.vercel.app`,
-        };
-      });
-
-      if (needsMigration) persistDeployments(migratedDeployments);
-      if (envNeedsMigration) persistEnvironments(migratedEnvironments);
-    };
-
-    migrateUrls();
-  }, []);
 
   useEffect(() => {
     const activeStatuses: Deployment['status'][] = ['queued', 'installing', 'building', 'testing', 'deploying', 'health_check'];
@@ -329,7 +298,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           const newLogs = generateDeploymentLogsForStage(deployment.id, deployment.commitNumber, nextStatus);
           const buildDuration = nextStatus === 'ready' ? Math.floor(Math.random() * 5000) + 3000 : deployment.buildDuration;
           const deploymentUrl = nextStatus === 'ready'
-            ? `https://${deployment.projectName.replace(/\s+/g, '-').toLowerCase()}-${deployment.environment}.vercel.app`
+            ? `/preview/${deployment.id}`
             : deployment.deploymentUrl;
 
           return {

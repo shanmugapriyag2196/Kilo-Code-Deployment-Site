@@ -57,7 +57,7 @@ export function generateMockDeployment(projectId: string, projectName: string, e
     commitSha,
     commitNumber,
     commitMessage,
-    deploymentUrl: `https://${projectName.replace(/\s+/g, '-').toLowerCase()}-${environment}.vercel.app`,
+    deploymentUrl: `/preview/${id}`,
     buildDuration: 0,
     createdAt: new Date().toISOString(),
     status: 'queued',
@@ -117,7 +117,7 @@ export function createActivityItem(
 
 export function createEnvironmentDeployment(
   projectId: string,
-  projectName: string,
+  _projectName: string,
   environment: 'production' | 'preview' | 'development',
   deploymentId: string
 ): EnvironmentDeployment {
@@ -126,7 +126,7 @@ export function createEnvironmentDeployment(
     projectId,
     environment,
     deploymentId,
-    url: `https://${projectName.replace(/\s+/g, '-').toLowerCase()}-${environment}.vercel.app`,
+    url: `/preview/${deploymentId}`,
     branch: 'main',
     status: 'ready',
     updatedAt: new Date().toISOString(),

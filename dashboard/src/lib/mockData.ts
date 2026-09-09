@@ -1,5 +1,4 @@
 import { Deployment, DeploymentLog, EnvironmentDeployment, ActivityItem, Platform } from '../types';
-import { parseGitHubRepo } from '../services/githubService';
 
 const commitMessages = [
   'feat: add user authentication',
@@ -48,7 +47,7 @@ export function generateMockDeployment(projectId: string, projectName: string, g
   const commitMessage = getCommitMessage(commitNumber);
   const platform: Platform = 'vercel';
   const branch = 'main';
-  const deploymentUrl = generateVercelUrl(projectName, gitRepository, branch, environment);
+  const deploymentUrl = generateVercelUrl(projectName, gitRepository, branch, environment, id);
   
   const deployment: Deployment = {
     id,
@@ -70,16 +69,8 @@ export function generateMockDeployment(projectId: string, projectName: string, g
   return deployment;
 }
 
-export function generateVercelUrl(projectName: string, gitRepository: string, branch: string, environment: 'production' | 'preview' | 'development'): string {
-  const parsed = parseGitHubRepo(gitRepository);
-  const repoName = parsed?.repo.toLowerCase().replace(/_/g, '-') || projectName.replace(/\s+/g, '-').toLowerCase();
-  const owner = parsed?.owner || 'unknown';
-
-  if (environment === 'production') {
-    return `https://${repoName}.vercel.app`;
-  }
-  const vercelProjectHash = '1497s';
-  return `https://${repoName}-git-${branch}-${owner}-${vercelProjectHash}-projects.vercel.app`;
+export function generateVercelUrl(_projectName: string, _gitRepository: string, _branch: string, _environment: 'production' | 'preview' | 'development', deploymentId: string): string {
+  return `/preview/${deploymentId}`;
 }
 
 export function generateDeploymentLogsForStage(deploymentId: string, commitNumber: number, status: Deployment['status']): DeploymentLog[] {
@@ -137,7 +128,7 @@ export function createEnvironmentDeployment(
   environment: 'production' | 'preview' | 'development',
   deploymentId: string
 ): EnvironmentDeployment {
-  const url = generateVercelUrl(projectName, gitRepository, 'main', environment);
+  const url = generateVercelUrl(projectName, gitRepository, 'main', environment, deploymentId);
 
   return {
     id: `env_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,

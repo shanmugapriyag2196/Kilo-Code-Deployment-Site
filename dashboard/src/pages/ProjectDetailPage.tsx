@@ -1,4 +1,4 @@
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useApp } from '../stores/AppContext';
 import { ArrowLeft, GitBranch, Clock, ExternalLink, Rocket, Github } from 'lucide-react';
 import StatusBadge from '../components/StatusBadge';
@@ -7,6 +7,7 @@ import { useState } from 'react';
 
 export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { projects, deployments, deployProject, environments, syncProjectFromGitHub } = useApp();
   const [syncing, setSyncing] = useState(false);
   const [syncMessage, setSyncMessage] = useState('');
@@ -145,16 +146,17 @@ export default function ProjectDetailPage() {
                 </div>
 
                 <div className="flex items-center gap-3 ml-4">
-                  {deployment.deploymentUrl && deployment.status === 'ready' && (
-                    <a
-                      href={deployment.deploymentUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
+                  {deployment.status === 'ready' && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/preview/${deployment.id}`);
+                      }}
                       className="text-slate-400 hover:text-slate-200"
+                      title="Preview deployment"
                     >
                       <ExternalLink className="w-4 h-4" />
-                    </a>
+                    </button>
                   )}
                   <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

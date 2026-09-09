@@ -150,7 +150,7 @@ export default function OverviewPage() {
               deployments.slice(0, 5).map((deployment) => (
                 <Link
                   key={deployment.id}
-                  to={`/deployments/${deployment.id}`}
+                  to={`/deployment-detail/${deployment.id}`}
                   className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg hover:bg-slate-800 transition-colors"
                 >
                   <div>

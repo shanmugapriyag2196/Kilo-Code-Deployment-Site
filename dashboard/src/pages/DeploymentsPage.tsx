@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useApp } from '../stores/AppContext';
 import { Rocket, Search, ExternalLink, Trash2 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import StatusBadge from '../components/StatusBadge';
 
 export default function DeploymentsPage() {
   const { deployments, cancelDeployment } = useApp();
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
@@ -81,8 +82,18 @@ export default function DeploymentsPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2 ml-4">
-                  {deployment.deploymentUrl && (
-                    <ExternalLink className="w-4 h-4 text-slate-400" />
+                  {deployment.status === 'ready' && (
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        navigate(`/preview/${deployment.id}`);
+                      }}
+                      className="p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded-lg transition-colors"
+                      title="Preview deployment"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                    </button>
                   )}
                   {['queued', 'installing', 'building', 'testing', 'deploying', 'health_check'].includes(deployment.status) && (
                     <button

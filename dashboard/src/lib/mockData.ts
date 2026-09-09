@@ -70,7 +70,13 @@ export function generateMockDeployment(projectId: string, projectName: string, g
 }
 
 export function generateVercelUrl(_projectName: string, _gitRepository: string, _branch: string, _environment: 'production' | 'preview' | 'development', deploymentId: string): string {
-  return `${window.location.origin}/preview/${deploymentId}`;
+  return `/preview/${deploymentId}`;
+}
+
+export function resolveDeploymentUrl(url: string): string {
+  if (!url) return '/';
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  return `${window.location.origin}${url.startsWith('/') ? '' : '/'}${url}`;
 }
 
 export function generateDeploymentLogsForStage(deploymentId: string, commitNumber: number, status: Deployment['status']): DeploymentLog[] {

@@ -4,6 +4,7 @@ import { ArrowLeft, GitBranch, Clock, ExternalLink, Rocket, Github } from 'lucid
 import StatusBadge from '../components/StatusBadge';
 import DeployButton from '../components/DeployButton';
 import { useState } from 'react';
+import { resolveDeploymentUrl } from '../lib/mockData';
 
 export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -149,7 +150,7 @@ export default function ProjectDetailPage() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        window.open(deployment.deploymentUrl, '_blank');
+                        window.open(resolveDeploymentUrl(deployment.deploymentUrl), '_blank');
                       }}
                       className="text-slate-400 hover:text-slate-200"
                       title="Preview deployment"

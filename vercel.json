@@ -1,0 +1,17 @@
+{
+  "builds": [
+    {
+      "src": "dashboard/package.json",
+      "use": "npm",
+      "config": { "install_mode": "dependencies" }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "headers": { "Cache-Control": "no-cache" },
+      "serve": { "root": "dashboard/dist" },
+      "status": 200
+    }
+  ]
+}

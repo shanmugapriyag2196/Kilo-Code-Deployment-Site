@@ -6,6 +6,7 @@ import CodeViewer from '../components/CodeViewer';
 import LogViewer from '../components/LogViewer';
 import { useState, useEffect } from 'react';
 import { parseGitHubRepo, fetchFileContent } from '../services/githubService';
+import { resolveDeploymentUrl } from '../lib/mockData';
 
 export default function DeployedPreviewPage() {
   const { id } = useParams<{ id: string }>();
@@ -116,18 +117,23 @@ export default function DeployedPreviewPage() {
 
         <div className="flex items-center gap-4">
           <StatusBadge status={deployment.status} />
-          {deployment.deploymentUrl && (
-            <span className="text-xs text-slate-500 flex items-center gap-1">
-              {deployment.deploymentUrl}
-              <button
-                onClick={() => copyToClipboard(deployment.deploymentUrl!)}
-                className="p-0.5 text-slate-500 hover:text-slate-300"
-                title="Copy URL"
-              >
-                {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-              </button>
-            </span>
-          )}
+          {deployment.deploymentUrl && (() => {
+            const resolvedUrl = resolveDeploymentUrl(deployment.deploymentUrl);
+            return (
+              <>
+                <span className="text-xs text-slate-500 flex items-center gap-1">
+                  {resolvedUrl}
+                  <button
+                    onClick={() => copyToClipboard(resolvedUrl)}
+                    className="p-0.5 text-slate-500 hover:text-slate-300"
+                    title="Copy URL"
+                  >
+                    {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                  </button>
+                </span>
+              </>
+            );
+          })()}
           {githubCommitUrl && (
             <a
               href={githubCommitUrl}

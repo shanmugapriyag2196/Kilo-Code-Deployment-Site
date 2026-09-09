@@ -7,6 +7,7 @@ import LogViewer from '../components/LogViewer';
 import CodeViewer from '../components/CodeViewer';
 import { useState, useEffect } from 'react';
 import { parseGitHubRepo } from '../services/githubService';
+import { resolveDeploymentUrl } from '../lib/mockData';
 
 export default function DeploymentDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -104,7 +105,7 @@ export default function DeploymentDetailPage() {
       <div className="flex gap-3">
         {deployment.deploymentUrl && deployment.status === 'ready' && (
           <button
-            onClick={() => window.open(deployment.deploymentUrl, '_blank')}
+            onClick={() => window.open(resolveDeploymentUrl(deployment.deploymentUrl), '_blank')}
             className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 transition-colors"
           >
             <ExternalLink className="w-4 h-4" />
@@ -161,29 +162,32 @@ export default function DeploymentDetailPage() {
         </div>
       </div>
 
-      {deployment.deploymentUrl && (
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
-          <div className="flex items-center gap-2 text-sm text-slate-400 mb-1">
-            <ExternalLink className="w-4 h-4" />
-            Deployment URL
+      {deployment.deploymentUrl && (() => {
+        const resolvedUrl = resolveDeploymentUrl(deployment.deploymentUrl);
+        return (
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+            <div className="flex items-center gap-2 text-sm text-slate-400 mb-1">
+              <ExternalLink className="w-4 h-4" />
+              Deployment URL
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => window.open(resolvedUrl, '_blank')}
+                className="text-blue-400 hover:text-blue-300 text-sm truncate flex items-center gap-1 text-left"
+              >
+                {resolvedUrl}
+              </button>
+              <button
+                onClick={() => copyToClipboard(resolvedUrl)}
+                className="p-0.5 text-slate-500 hover:text-slate-300"
+                title="Copy deployment URL"
+              >
+                {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+              </button>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => deployment.deploymentUrl && window.open(deployment.deploymentUrl, '_blank')}
-              className="text-blue-400 hover:text-blue-300 text-sm truncate flex items-center gap-1 text-left"
-            >
-              {deployment.deploymentUrl}
-            </button>
-            <button
-              onClick={() => copyToClipboard(deployment.deploymentUrl)}
-              className="p-0.5 text-slate-500 hover:text-slate-300"
-              title="Copy deployment URL"
-            >
-              {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-            </button>
-          </div>
-        </div>
-      )}
+        );
+      })()}
 
       <div className="border-b border-slate-800">
         <div className="flex gap-6">

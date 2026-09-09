@@ -280,6 +280,39 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    const migrateUrls = () => {
+      const needsMigration = deployments.some(d => d.deploymentUrl?.startsWith('http://localhost'));
+      const envNeedsMigration = environments.some(e => e.url?.startsWith('http://localhost'));
+      if (!needsMigration && !envNeedsMigration) return;
+
+      const migratedDeployments = deployments.map(d => {
+        if (!d.deploymentUrl?.startsWith('http://localhost')) return d;
+        const project = projects.find(p => p.id === d.projectId);
+        const projectSlug = project?.name.replace(/\s+/g, '-').toLowerCase() || 'project';
+        return {
+          ...d,
+          deploymentUrl: `https://${projectSlug}-${d.environment}.vercel.app`,
+        };
+      });
+
+      const migratedEnvironments = environments.map(e => {
+        if (!e.url?.startsWith('http://localhost')) return e;
+        const project = projects.find(p => p.id === e.projectId);
+        const projectSlug = project?.name.replace(/\s+/g, '-').toLowerCase() || 'project';
+        return {
+          ...e,
+          url: `https://${projectSlug}-${e.environment}.vercel.app`,
+        };
+      });
+
+      if (needsMigration) persistDeployments(migratedDeployments);
+      if (envNeedsMigration) persistEnvironments(migratedEnvironments);
+    };
+
+    migrateUrls();
+  }, []);
+
+  useEffect(() => {
     const activeStatuses: Deployment['status'][] = ['queued', 'installing', 'building', 'testing', 'deploying', 'health_check'];
     
     const interval = setInterval(() => {

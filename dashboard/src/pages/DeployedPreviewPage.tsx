@@ -17,27 +17,28 @@ export default function DeployedPreviewPage() {
 
   const deployment = deployments.find(d => d.id === id);
 
+  const loadTree = async (force = false) => {
+    if (!deployment) return;
+    setLoading(true);
+    try {
+      const tree = await getCommitTree(deployment.id, force);
+      setCommitFiles(
+        tree.map(item => ({
+          path: item.path,
+          type: item.type as 'blob' | 'tree',
+        }))
+      );
+    } catch (error) {
+      console.error('Failed to load commit tree:', error);
+      setCommitFiles([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const loadTree = async () => {
-      if (!deployment) return;
-      setLoading(true);
-      try {
-        const tree = await getCommitTree(deployment.id, true);
-        setCommitFiles(
-          tree.map(item => ({
-            path: item.path,
-            type: item.type as 'blob' | 'tree',
-          }))
-        );
-      } catch (error) {
-        console.error('Failed to load commit tree:', error);
-        setCommitFiles([]);
-      } finally {
-        setLoading(false);
-      }
-    };
     loadTree();
-  }, [deployment, getCommitTree]);
+  }, [deployment]);
 
   if (!deployment) {
     return (

@@ -188,8 +188,16 @@ export default function DeployedPreviewPage() {
                   </pre>
                 </div>
               </div>
-            ) : (
+            ) : commitFiles.length > 0 ? (
               <CodeViewer files={commitFiles} onFileClick={handleFileClick} />
+            ) : (
+              <div className="text-center py-8">
+                <Github className="w-12 h-12 text-slate-600 mx-auto mb-4" />
+                <p className="text-slate-400">No files found for this commit</p>
+                <p className="text-xs text-slate-500 mt-1">
+                  This could be due to GitHub API rate limits or an empty repository
+                </p>
+              </div>
             )}
           </div>
         </div>

@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Layout from './components/Layout';
 import OverviewPage from './pages/OverviewPage';
 import ProjectsPage from './pages/ProjectsPage';
@@ -18,10 +18,13 @@ import { useState } from 'react';
 function AppContent() {
   const [showNewProject, setShowNewProject] = useState(false);
   const { selectProject } = useApp();
+  const location = useLocation();
+
+  const isPreviewPage = location.pathname.startsWith('/preview/');
 
   return (
     <>
-      <Layout onNewProject={() => setShowNewProject(true)} />
+      {!isPreviewPage && <Layout onNewProject={() => setShowNewProject(true)} />}
       {showNewProject && <NewProjectModal onClose={() => setShowNewProject(false)} />}
       <Routes>
         <Route path="/" element={<OverviewPage />} />

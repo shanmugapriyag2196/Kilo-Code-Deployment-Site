@@ -7,8 +7,5 @@
         "distDir": "dashboard/dist"
       }
     }
-  ],
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

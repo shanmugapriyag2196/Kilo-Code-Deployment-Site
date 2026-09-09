@@ -75,10 +75,12 @@ export function generateVercelUrl(projectName: string, gitRepository: string, br
   const parsed = parseGitHubRepo(gitRepository);
   const owner = parsed?.owner || 'unknown';
 
+  const vercelProjectHash = '1497s';
+
   if (environment === 'production') {
     return `https://${projectSlug}.vercel.app`;
   }
-  return `https://${projectSlug}-git-${branch}-${owner}.vercel.app`;
+  return `https://${projectSlug}-git-${branch}-${owner}-${vercelProjectHash}-projects.vercel.app`;
 }
 
 export function generateDeploymentLogsForStage(deploymentId: string, commitNumber: number, status: Deployment['status']): DeploymentLog[] {
@@ -131,17 +133,12 @@ export function createActivityItem(
 
 export function createEnvironmentDeployment(
   projectId: string,
-  _projectName: string,
+  projectName: string,
   gitRepository: string,
   environment: 'production' | 'preview' | 'development',
   deploymentId: string
 ): EnvironmentDeployment {
-  const projectSlug = _projectName.replace(/\s+/g, '-').toLowerCase();
-  const parsed = parseGitHubRepo(gitRepository);
-  const owner = parsed?.owner || 'unknown';
-  const url = environment === 'production'
-    ? `https://${projectSlug}.vercel.app`
-    : `https://${projectSlug}-git-${environment}-${owner}.vercel.app`;
+  const url = generateVercelUrl(projectName, gitRepository, 'main', environment);
 
   return {
     id: `env_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,

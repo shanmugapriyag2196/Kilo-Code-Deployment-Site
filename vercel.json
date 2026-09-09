@@ -8,14 +8,7 @@
       }
     }
   ],
-  "routes": [
-    {
-      "src": "/(.*[.,].*)",
-      "continue": true
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
-    }
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

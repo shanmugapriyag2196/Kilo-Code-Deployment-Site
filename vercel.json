@@ -1,17 +1,19 @@
 {
   "builds": [
     {
-      "src": "dashboard/package.json",
-      "use": "npm",
-      "config": { "install_mode": "dependencies" }
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dashboard/dist"
+      }
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "headers": { "Cache-Control": "no-cache" },
-      "serve": { "root": "dashboard/dist" },
-      "status": 200
+      "status": 200,
+      "headers": { "Cache-Control": "no-cache, max-age=0" },
+      "dest": "/index.html"
     }
   ]
 }

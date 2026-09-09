@@ -169,12 +169,16 @@ export default function DeploymentDetailPage() {
             Deployment URL
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-slate-400 truncate">
+            <button
+              onClick={() => navigate(`/preview/${deployment.id}`)}
+              className="text-blue-400 hover:text-blue-300 text-sm truncate flex items-center gap-1 text-left"
+            >
               {deployment.deploymentUrl}
-            </span>
+            </button>
             <button
               onClick={() => copyToClipboard(deployment.deploymentUrl)}
-              className="text-xs text-slate-400 hover:text-slate-200"
+              className="p-0.5 text-slate-500 hover:text-slate-300"
+              title="Copy deployment URL"
             >
               {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
             </button>

@@ -1,0 +1,9 @@
+{
+  "name": "kilo-code-aggregate-bot",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "cd dashboard && npm run dev",
+    "build": "cd dashboard && npm run build"
+  }
+}

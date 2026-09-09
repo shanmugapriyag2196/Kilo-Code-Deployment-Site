@@ -8,7 +8,14 @@
       }
     }
   ],
-  "rewrites": [
-    { "source": "/((?!assets/).*)", "destination": "/index.html" }
+  "routes": [
+    {
+      "src": "/(.*[.,].*)",
+      "continue": true
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
   ]
 }

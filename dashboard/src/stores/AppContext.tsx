@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
 import { Project, Deployment, EnvironmentDeployment, ActivityItem, GitHubTreeItem } from '../types';
 import { storage } from '../lib/storage';
-import { generateMockDeployment, createActivityItem, createEnvironmentDeployment, getNextStatus, generateDeploymentLogsForStage } from '../lib/mockData';
+import { generateMockDeployment, createActivityItem, createEnvironmentDeployment, getNextStatus, generateDeploymentLogsForStage, generateVercelUrl } from '../lib/mockData';
 import { fetchCommitsFromGitHub, fetchCommitTree, parseGitHubRepo } from '../services/githubService';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -107,7 +107,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         commitSha: commit.sha,
         commitNumber,
         commitMessage: commit.message.split('\n')[0],
-        deploymentUrl: `/preview/${deploymentId}`,
+        deploymentUrl: generateVercelUrl(project.name, project.gitRepository, 'main', 'production'),
         buildDuration: Math.floor(Math.random() * 5000) + 2000,
         createdAt: new Date(Date.now() - (commits.length - index) * 60000).toISOString(),
         status: 'ready',
@@ -124,7 +124,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       projectId,
       environment: 'production' as const,
       deploymentId: newDeployments[0].id,
-      url: `/preview/${newDeployments[0].id}`,
+      url: generateVercelUrl(project.name, project.gitRepository, 'main', 'production'),
       branch: 'main',
       status: 'ready' as const,
       updatedAt: now,
@@ -178,7 +178,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const existingDeployments = deployments.filter(d => d.projectId === projectId);
     const commitNumber = existingDeployments.length > 0 ? Math.max(...existingDeployments.map(d => d.commitNumber)) + 1 : 1;
 
-    const deployment = generateMockDeployment(projectId, project.name, environment, commitNumber);
+    const deployment = generateMockDeployment(projectId, project.name, project.gitRepository, environment, commitNumber);
     const newDeployments = [deployment, ...deployments];
     persistDeployments(newDeployments);
 
@@ -186,7 +186,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     persistActivity([activityItem, ...activity]);
 
     if (environment === 'production') {
-      const envDeployment = createEnvironmentDeployment(projectId, project.name, 'production', deployment.id);
+      const envDeployment = createEnvironmentDeployment(projectId, project.name, project.gitRepository, 'production', deployment.id);
       const existingProd = environments.find(e => e.projectId === projectId && e.environment === 'production');
       if (existingProd) {
         persistEnvironments(environments.map(e => e.id === existingProd.id ? envDeployment : e));
@@ -216,7 +216,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const existingDeployments = deployments.filter(d => d.projectId === existing.projectId);
     const commitNumber = existingDeployments.length > 0 ? Math.max(...existingDeployments.map(d => d.commitNumber)) + 1 : 1;
 
-    const newDeployment = generateMockDeployment(existing.projectId, existing.projectName, existing.environment, commitNumber);
+    const project = projects.find(p => p.id === existing.projectId);
+    const newDeployment = generateMockDeployment(existing.projectId, existing.projectName, project?.gitRepository || '', existing.environment, commitNumber);
     newDeployment.branch = existing.branch;
     const newDeployments = [newDeployment, ...deployments];
     persistDeployments(newDeployments);
@@ -297,16 +298,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
           const newLogs = generateDeploymentLogsForStage(deployment.id, deployment.commitNumber, nextStatus);
           const buildDuration = nextStatus === 'ready' ? Math.floor(Math.random() * 5000) + 3000 : deployment.buildDuration;
-          const deploymentUrl = nextStatus === 'ready'
-            ? `/preview/${deployment.id}`
-            : deployment.deploymentUrl;
 
           return {
             ...deployment,
             status: nextStatus,
             logs: [...deployment.logs, ...newLogs],
             buildDuration,
-            deploymentUrl,
           };
         });
 

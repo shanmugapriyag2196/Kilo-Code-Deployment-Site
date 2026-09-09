@@ -1,4 +1,4 @@
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useApp } from '../stores/AppContext';
 import { ArrowLeft, GitBranch, Clock, ExternalLink, Rocket, Github } from 'lucide-react';
 import StatusBadge from '../components/StatusBadge';
@@ -7,7 +7,6 @@ import { useState } from 'react';
 
 export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const { projects, deployments, deployProject, environments, syncProjectFromGitHub } = useApp();
   const [syncing, setSyncing] = useState(false);
   const [syncMessage, setSyncMessage] = useState('');
@@ -150,7 +149,7 @@ export default function ProjectDetailPage() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        navigate(`/preview/${deployment.id}`);
+                        window.open(deployment.deploymentUrl, '_blank');
                       }}
                       className="text-slate-400 hover:text-slate-200"
                       title="Preview deployment"

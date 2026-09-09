@@ -1,4 +1,5 @@
 import { Deployment, DeploymentLog, EnvironmentDeployment, ActivityItem, Platform } from '../types';
+import { parseGitHubRepo } from '../services/githubService';
 
 const commitMessages = [
   'feat: add user authentication',
@@ -41,11 +42,13 @@ export function getCommitMessage(commitNumber: number): string {
   return commitMessages[(commitNumber - 1) % commitMessages.length];
 }
 
-export function generateMockDeployment(projectId: string, projectName: string, environment: 'production' | 'preview' | 'development' = 'production', commitNumber: number = 1): Deployment {
+export function generateMockDeployment(projectId: string, projectName: string, gitRepository: string, environment: 'production' | 'preview' | 'development' = 'production', commitNumber: number = 1): Deployment {
   const id = `deploy_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
   const commitSha = Math.random().toString(36).substring(2, 9);
   const commitMessage = getCommitMessage(commitNumber);
   const platform: Platform = 'vercel';
+  const branch = 'main';
+  const deploymentUrl = generateVercelUrl(projectName, gitRepository, branch, environment);
   
   const deployment: Deployment = {
     id,
@@ -53,11 +56,11 @@ export function generateMockDeployment(projectId: string, projectName: string, e
     projectName,
     environment,
     platform,
-    branch: 'main',
+    branch,
     commitSha,
     commitNumber,
     commitMessage,
-    deploymentUrl: `/preview/${id}`,
+    deploymentUrl,
     buildDuration: 0,
     createdAt: new Date().toISOString(),
     status: 'queued',
@@ -65,6 +68,17 @@ export function generateMockDeployment(projectId: string, projectName: string, e
   };
 
   return deployment;
+}
+
+export function generateVercelUrl(projectName: string, gitRepository: string, branch: string, environment: 'production' | 'preview' | 'development'): string {
+  const projectSlug = projectName.replace(/\s+/g, '-').toLowerCase();
+  const parsed = parseGitHubRepo(gitRepository);
+  const owner = parsed?.owner || 'unknown';
+
+  if (environment === 'production') {
+    return `https://${projectSlug}.vercel.app`;
+  }
+  return `https://${projectSlug}-git-${branch}-${owner}.vercel.app`;
 }
 
 export function generateDeploymentLogsForStage(deploymentId: string, commitNumber: number, status: Deployment['status']): DeploymentLog[] {
@@ -118,15 +132,23 @@ export function createActivityItem(
 export function createEnvironmentDeployment(
   projectId: string,
   _projectName: string,
+  gitRepository: string,
   environment: 'production' | 'preview' | 'development',
   deploymentId: string
 ): EnvironmentDeployment {
+  const projectSlug = _projectName.replace(/\s+/g, '-').toLowerCase();
+  const parsed = parseGitHubRepo(gitRepository);
+  const owner = parsed?.owner || 'unknown';
+  const url = environment === 'production'
+    ? `https://${projectSlug}.vercel.app`
+    : `https://${projectSlug}-git-${environment}-${owner}.vercel.app`;
+
   return {
     id: `env_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
     projectId,
     environment,
     deploymentId,
-    url: `/preview/${deploymentId}`,
+    url,
     branch: 'main',
     status: 'ready',
     updatedAt: new Date().toISOString(),

@@ -1,12 +1,11 @@
 import { useState } from 'react';
 import { useApp } from '../stores/AppContext';
 import { Rocket, Search, ExternalLink, Trash2 } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import StatusBadge from '../components/StatusBadge';
 
 export default function DeploymentsPage() {
   const { deployments, cancelDeployment } = useApp();
-  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
@@ -87,7 +86,7 @@ export default function DeploymentsPage() {
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        navigate(`/preview/${deployment.id}`);
+                        window.open(deployment.deploymentUrl, '_blank');
                       }}
                       className="p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded-lg transition-colors"
                       title="Preview deployment"

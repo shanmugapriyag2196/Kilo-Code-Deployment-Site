@@ -70,7 +70,7 @@ export function generateMockDeployment(projectId: string, projectName: string, g
 }
 
 export function generateVercelUrl(_projectName: string, _gitRepository: string, _branch: string, _environment: 'production' | 'preview' | 'development', deploymentId: string): string {
-  return `/preview/${deploymentId}`;
+  return `${window.location.origin}/preview/${deploymentId}`;
 }
 
 export function generateDeploymentLogsForStage(deploymentId: string, commitNumber: number, status: Deployment['status']): DeploymentLog[] {

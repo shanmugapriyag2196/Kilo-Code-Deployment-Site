@@ -101,13 +101,16 @@ export default function DeployedPreviewPage() {
           <div className="flex items-center gap-4">
             <StatusBadge status={deployment.status} />
             {deployment.deploymentUrl && (
-              <button
-                onClick={() => copyToClipboard(deployment.deploymentUrl!)}
-                className="text-xs text-slate-400 hover:text-slate-200 flex items-center gap-1 transition-colors"
-              >
-                {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                {deployment.deploymentUrl.replace('https://', '')}
-              </button>
+              <span className="text-xs text-slate-500 flex items-center gap-1">
+                {deployment.deploymentUrl}
+                <button
+                  onClick={() => copyToClipboard(deployment.deploymentUrl!)}
+                  className="p-0.5 text-slate-500 hover:text-slate-300"
+                  title="Copy deployment URL"
+                >
+                  {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                </button>
+              </span>
             )}
           </div>
         </div>

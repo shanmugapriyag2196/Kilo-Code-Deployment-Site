@@ -1,6 +1,6 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useApp } from '../stores/AppContext';
-import { ArrowLeft, ExternalLink, Check, Rocket, GitBranch, Clock, RefreshCw, Trash2, FileCode } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Check, Rocket, GitBranch, Clock, RefreshCw, Trash2, FileCode, Copy } from 'lucide-react';
 import StatusBadge from '../components/StatusBadge';
 import DeploymentPipeline from '../components/DeploymentPipeline';
 import LogViewer from '../components/LogViewer';
@@ -168,13 +168,17 @@ export default function DeploymentDetailPage() {
             <ExternalLink className="w-4 h-4" />
             Deployment URL
           </div>
-          <button
-            onClick={() => copyToClipboard(deployment.deploymentUrl)}
-            className="text-blue-400 hover:text-blue-300 text-sm truncate flex items-center gap-1"
-          >
-            {copied ? <Check className="w-3 h-3" /> : <ExternalLink className="w-3 h-3" />}
-            {deployment.deploymentUrl.replace('https://', '')}
-          </button>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-slate-400 truncate">
+              {deployment.deploymentUrl}
+            </span>
+            <button
+              onClick={() => copyToClipboard(deployment.deploymentUrl)}
+              className="text-xs text-slate-400 hover:text-slate-200"
+            >
+              {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+            </button>
+          </div>
         </div>
       )}
 

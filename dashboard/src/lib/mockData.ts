@@ -71,16 +71,15 @@ export function generateMockDeployment(projectId: string, projectName: string, g
 }
 
 export function generateVercelUrl(projectName: string, gitRepository: string, branch: string, environment: 'production' | 'preview' | 'development'): string {
-  const projectSlug = projectName.replace(/\s+/g, '-').toLowerCase();
   const parsed = parseGitHubRepo(gitRepository);
+  const repoName = parsed?.repo.toLowerCase().replace(/_/g, '-') || projectName.replace(/\s+/g, '-').toLowerCase();
   const owner = parsed?.owner || 'unknown';
 
-  const vercelProjectHash = '1497s';
-
   if (environment === 'production') {
-    return `https://${projectSlug}.vercel.app`;
+    return `https://${repoName}.vercel.app`;
   }
-  return `https://${projectSlug}-git-${branch}-${owner}-${vercelProjectHash}-projects.vercel.app`;
+  const vercelProjectHash = '1497s';
+  return `https://${repoName}-git-${branch}-${owner}-${vercelProjectHash}-projects.vercel.app`;
 }
 
 export function generateDeploymentLogsForStage(deploymentId: string, commitNumber: number, status: Deployment['status']): DeploymentLog[] {

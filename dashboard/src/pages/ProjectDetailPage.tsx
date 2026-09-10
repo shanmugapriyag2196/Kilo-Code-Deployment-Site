@@ -3,8 +3,8 @@ import { useApp } from '../stores/AppContext';
 import { ArrowLeft, GitBranch, Clock, ExternalLink, Rocket, Github } from 'lucide-react';
 import StatusBadge from '../components/StatusBadge';
 import DeployButton from '../components/DeployButton';
+import PreviewButton from '../components/PreviewButton';
 import { useState } from 'react';
-import { resolveDeploymentUrl } from '../lib/mockData';
 
 export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -147,16 +147,11 @@ export default function ProjectDetailPage() {
 
                 <div className="flex items-center gap-3 ml-4">
                   {deployment.status === 'ready' && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        window.open(resolveDeploymentUrl(deployment.deploymentUrl), '_blank');
-                      }}
+                    <PreviewButton
+                      deployment={deployment}
+                      project={project}
                       className="text-slate-400 hover:text-slate-200"
-                      title="Preview deployment"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                    </button>
+                    />
                   )}
                   <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

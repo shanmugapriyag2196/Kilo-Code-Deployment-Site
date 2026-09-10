@@ -21,6 +21,8 @@ interface AppContextType extends AppState {
   deleteProject: (id: string) => void;
   selectProject: (id: string | null) => void;
   deployProject: (projectId: string, environment: 'production' | 'preview' | 'development') => Deployment;
+  updateDeployment: (id: string, updates: Partial<Deployment>) => void;
+  updateEnvironment: (deploymentId: string, updates: Partial<EnvironmentDeployment>) => void;
   cancelDeployment: (deploymentId: string) => void;
   redeploy: (deploymentId: string) => Deployment;
   rollback: (projectId: string) => void;
@@ -49,6 +51,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setDeployments(newDeployments);
     storage.saveDeployments(newDeployments);
   };
+
+  const updateDeployment = useCallback((id: string, updates: Partial<Deployment>) => {
+    const newDeployments = deployments.map(deployment =>
+      deployment.id === id ? { ...deployment, ...updates } : deployment
+    );
+    persistDeployments(newDeployments);
+  }, [deployments]);
+
+  const updateEnvironment = useCallback((deploymentId: string, updates: Partial<EnvironmentDeployment>) => {
+    const newEnvironments = environments.map(environment =>
+      environment.deploymentId === deploymentId ? { ...environment, ...updates, updatedAt: new Date().toISOString() } : environment
+    );
+    persistEnvironments(newEnvironments);
+  }, [environments]);
 
   const persistEnvironments = (newEnvs: EnvironmentDeployment[]) => {
     setEnvironments(newEnvs);
@@ -332,6 +348,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       deleteProject,
       selectProject,
       deployProject,
+      updateDeployment,
+      updateEnvironment,
       cancelDeployment,
       redeploy,
       rollback,

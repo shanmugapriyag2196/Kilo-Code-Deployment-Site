@@ -5,9 +5,10 @@ import StatusBadge from '../components/StatusBadge';
 import DeploymentPipeline from '../components/DeploymentPipeline';
 import LogViewer from '../components/LogViewer';
 import CodeViewer from '../components/CodeViewer';
+import PreviewButton from '../components/PreviewButton';
 import { useState, useEffect } from 'react';
 import { parseGitHubRepo } from '../services/githubService';
-import { resolveDeploymentUrl } from '../lib/mockData';
+import { resolveDeploymentPreviewUrl, hasDirectDeploymentUrl } from '../services/vercelService';
 
 export default function DeploymentDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -103,15 +104,13 @@ export default function DeploymentDetailPage() {
       </div>
 
       <div className="flex gap-3">
-        {deployment.deploymentUrl && deployment.status === 'ready' && (
-          <button
-            onClick={() => window.open(resolveDeploymentUrl(deployment.deploymentUrl), '_blank')}
-            className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 transition-colors"
-          >
-            <ExternalLink className="w-4 h-4" />
-            Preview
-          </button>
-        )}
+        <PreviewButton
+          deployment={deployment}
+          project={project}
+          className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 transition-colors"
+        >
+          Preview
+        </PreviewButton>
         <button
           onClick={handleRedeploy}
           disabled={deployment.status !== 'ready' && deployment.status !== 'failed'}

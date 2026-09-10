@@ -13,6 +13,7 @@ export default function NewProjectModal({ onClose }: NewProjectModalProps) {
     description: '',
     gitRepository: '',
     branch: 'main',
+    vercelProjectId: '',
   });
   const [createdProjectId, setCreatedProjectId] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);

@@ -10,6 +10,7 @@ export interface Project {
   gitRepository: string;
   branch: string;
   platform?: Platform;
+  vercelProjectId?: string;
   status: ProjectStatus;
   createdAt: string;
   updatedAt: string;

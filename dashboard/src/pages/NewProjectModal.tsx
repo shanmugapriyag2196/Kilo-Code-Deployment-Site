@@ -115,6 +115,22 @@ export default function NewProjectModal({ onClose }: NewProjectModalProps) {
               />
             </div>
 
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Vercel Project ID or Name
+              </label>
+              <input
+                type="text"
+                value={formData.vercelProjectId}
+                onChange={(e) => setFormData({ ...formData, vercelProjectId: e.target.value })}
+                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-slate-200 focus:outline-none focus:border-blue-500"
+                placeholder="Leave blank to use the project name"
+              />
+              <p className="text-xs text-slate-500 mt-1">
+                Used to find the matching Vercel deployment for each synced commit.
+              </p>
+            </div>
+
             <div className="flex gap-3 pt-4">
               <button
                 type="submit"

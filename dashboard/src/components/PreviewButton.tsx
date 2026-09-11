@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ExternalLink, LoaderCircle } from 'lucide-react';
+import { AlertCircle, ExternalLink, LoaderCircle } from 'lucide-react';
 import { Deployment, Project } from '../types';
 import { resolveDeploymentPreviewUrl } from '../services/vercelService';
 import { useApp } from '../stores/AppContext';
@@ -12,7 +12,7 @@ interface PreviewButtonProps {
 }
 
 export default function PreviewButton({ deployment, project, className = '', children }: PreviewButtonProps) {
-  const { updateDeployment } = useApp();
+  const { updateDeployment, updateEnvironment } = useApp();
   const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle');
   const [message, setMessage] = useState('');
 
@@ -29,6 +29,7 @@ export default function PreviewButton({ deployment, project, className = '', chi
     try {
       const url = await resolveDeploymentPreviewUrl(deployment, project);
       updateDeployment(deployment.id, { deploymentUrl: url });
+      updateEnvironment(deployment.id, { url });
 
       if (previewWindow) {
         previewWindow.location.replace(url);
@@ -46,34 +47,22 @@ export default function PreviewButton({ deployment, project, className = '', chi
     }
   };
 
-  if (status === 'error') {
-    return (
-      <button
-        type="button"
-        onClick={handlePreview}
-        className={className}
-        title={message}
-      >
-        {children || 'Preview'}
-      </button>
-    );
-  }
-
   return (
     <button
       type="button"
       onClick={handlePreview}
       disabled={status === 'loading'}
       className={className}
-      title="Open the original Vercel deployment"
+      title={status === 'error' ? message : 'Open the original Vercel deployment'}
     >
       {status === 'loading' ? (
         <LoaderCircle className="w-4 h-4 animate-spin" />
+      ) : status === 'error' ? (
+        <AlertCircle className="w-4 h-4 text-red-400" />
       ) : (
         <ExternalLink className="w-4 h-4" />
       )}
       {children}
-      {status === 'error' && <span className="sr-only">{message}</span>}
     </button>
   );
 }

@@ -119,7 +119,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         projectName: project.name,
         environment: 'production',
         platform: project.platform || 'vercel',
-        branch: 'main',
+        branch: project.branch,
         commitSha: commit.sha,
         commitNumber,
         commitMessage: commit.message.split('\n')[0],
@@ -335,28 +335,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AppContext.Provider     value={{
-      projects,
-      deployments,
-      environments,
-      activity,
-      selectedProjectId,
-      selectedDeploymentId,
-      createProject,
-      syncProjectFromGitHub,
-      updateProject,
-      deleteProject,
-      selectProject,
-      deployProject,
-      updateDeployment,
-      updateEnvironment,
-      cancelDeployment,
-      redeploy,
-      rollback,
-      selectDeployment,
-      refreshData,
-      getCommitTree,
-    }}>
+    <AppContext.Provider
+      value={{
+        projects,
+        deployments,
+        environments,
+        activity,
+        selectedProjectId,
+        selectedDeploymentId,
+        createProject,
+        syncProjectFromGitHub,
+        updateProject,
+        deleteProject,
+        selectProject,
+        deployProject,
+        updateDeployment,
+        updateEnvironment,
+        cancelDeployment,
+        redeploy,
+        rollback,
+        selectDeployment,
+        refreshData,
+        getCommitTree,
+      }}
+    >
       {children}
     </AppContext.Provider>
   );

@@ -8,7 +8,7 @@ import CodeViewer from '../components/CodeViewer';
 import PreviewButton from '../components/PreviewButton';
 import { useState, useEffect } from 'react';
 import { parseGitHubRepo } from '../services/githubService';
-import { resolveDeploymentPreviewUrl, hasDirectDeploymentUrl } from '../services/vercelService';
+import { hasDirectDeploymentUrl } from '../services/vercelService';
 
 export default function DeploymentDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -161,32 +161,35 @@ export default function DeploymentDetailPage() {
         </div>
       </div>
 
-      {deployment.deploymentUrl && (() => {
-        const resolvedUrl = resolveDeploymentUrl(deployment.deploymentUrl);
-        return (
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
-            <div className="flex items-center gap-2 text-sm text-slate-400 mb-1">
-              <ExternalLink className="w-4 h-4" />
-              Deployment URL
-            </div>
+      {deployment.status === 'ready' && (
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+          <div className="flex items-center gap-2 text-sm text-slate-400 mb-1">
+            <ExternalLink className="w-4 h-4" />
+            Deployment URL
+          </div>
+          {hasDirectDeploymentUrl(deployment) ? (
             <div className="flex items-center gap-2">
               <button
-                onClick={() => window.open(resolvedUrl, '_blank')}
+                onClick={() => window.open(deployment.deploymentUrl, '_blank', 'noopener,noreferrer')}
                 className="text-blue-400 hover:text-blue-300 text-sm truncate flex items-center gap-1 text-left"
               >
-                {resolvedUrl}
+                {deployment.deploymentUrl}
               </button>
               <button
-                onClick={() => copyToClipboard(resolvedUrl)}
+                onClick={() => copyToClipboard(deployment.deploymentUrl)}
                 className="p-0.5 text-slate-500 hover:text-slate-300"
                 title="Copy deployment URL"
               >
                 {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
               </button>
             </div>
-          </div>
-        );
-      })()}
+          ) : (
+            <p className="text-sm text-slate-400">
+              Open Preview to resolve and display the original Vercel deployment URL.
+            </p>
+          )}
+        </div>
+      )}
 
       <div className="border-b border-slate-800">
         <div className="flex gap-6">
